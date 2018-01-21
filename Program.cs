@@ -22,7 +22,7 @@ namespace Unjailbreaker
                 Console.ReadLine();
                 return;
             }
-            bool install = false, uninstall = false, convert = false, manual = false /* for now you'll have to manually extract the files in 'files'. The program will still convert and install automatically though */;
+            bool install = false, uninstall = false, convert = false, manual = false;
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
@@ -55,6 +55,7 @@ namespace Unjailbreaker
 
             if (manual)
             {
+                //this is mostly pointless
                 if (!Directory.Exists("files")) Directory.CreateDirectory("files");
                 Console.WriteLine("Please extract the deb file's data.tar to 'files' and press any key to " + (convert ? "begin conversion and " : "") + (install ? "install" : uninstall ? "uninstall" : ""));
                 Console.ReadLine();
