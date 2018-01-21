@@ -5,7 +5,6 @@ C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bi
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\Unjailbreaker.pdb
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\jLib.dll
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\SevenZipExtractor.dll
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\WinSCPnet.dll
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\JMWCrypto.dll
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\jLib.pdb
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\JMWCrypto.pdb
