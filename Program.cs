@@ -8,12 +8,27 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using WinSCP;
 
 namespace Unjailbreaker
 {
     class Program
     {
+        static string convert_path(string i)
+        {
+            return i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
+        }
+        static void respring(Session session, bool uicache = false)
+        {
+            if (uicache)
+            {
+                Console.WriteLine("Running uicache (may take up to 30 seconds)");
+                session.ExecuteCommand("uicache"); //respring
+            }
+            Console.WriteLine("Respringing...");
+            session.ExecuteCommand("killall -9 SpringBoard"); //respring
+        }
         static void createDirIfDoesntExist(string path)
         {
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
@@ -40,7 +55,7 @@ namespace Unjailbreaker
         }
         static void Main(string[] args)
         {
-            bool install = false, uninstall = false, convert = false, manual = false;
+            bool install = false, uninstall = false, convert = false, manual = false, jtool = false;
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
@@ -65,6 +80,11 @@ namespace Unjailbreaker
             if (session.FileExists("/usr/lib/SBInject"))
             {
                 convert = true;
+                jtool = true;
+            }
+            if (session.FileExists("/jb/"))
+            {
+                jtool = true;
             }
 
             if (args.Contains("convert")) convert = true;
@@ -108,6 +128,7 @@ namespace Unjailbreaker
             {
                 if (convert) //convert to electra format
                 {
+                    Console.WriteLine("Converting to electra tweak format");
                     createDirIfDoesntExist("files\\bootstrap");
                     createDirIfDoesntExist("files\\bootstrap\\Library");
                     if (Directory.Exists("files\\Library\\MobileSubstrate\\"))
@@ -133,13 +154,14 @@ namespace Unjailbreaker
             string s = "";
             c.Files.ForEach(i =>
                        {
-                           s += ("rm " + i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)") + "\n").Replace("'", "\\'").Replace("@", "\\@"); //creates uninstall script for tweak (used if uninstall == true)
+                           s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
                        });
             File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
                 if (install)
                 {
+                    Console.WriteLine("Installing deb");
                     foreach (string dir in Directory.GetDirectories("files"))
                     {
                         session.PutFiles(dir, "/"); //put directories
@@ -148,13 +170,49 @@ namespace Unjailbreaker
                     {
                         session.PutFiles(file, "/"); //put files
                     }
-                    session.ExecuteCommand("killall -9 SpringBoard"); //respring
+                    if (Directory.Exists("files\\Applications") && jtool)
+                    {
+                        if (convert)
+                        {
+                            session.ExecuteCommand("jtool --ent /bootstrap/bin/ls >> ~/plat.ent");
+                        }
+                        else
+                        {
+                            session.ExecuteCommand("jtool --ent /jb/bin/ls >> ~/plat.ent");
+                        }
+                        foreach (var app in Directory.GetDirectories("files\\Applications\\"))
+                        {
+                            Crawler crawler = new Crawler(app);
+                            c.Files.ForEach(i =>
+                            {
+                                if (i.Contains("\\Applications\\"))
+                                {
+                                    bool sign = false;
+                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                    if (!sign)
+                                    {
+                                        if (i.Split('.').Last() == "dylib") sign = true;
+                                    }
+                                    i = convert_path(i);
+                                    if (sign)
+                                    {
+                                        Console.WriteLine("Signing " + i);
+                                        session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                        session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                        session.ExecuteCommand("jtool --sign --ent ~/plat.ent --inplace " + i);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    respring(session, Directory.Exists("files\\Applications\\"));
                 }
                 else if (uninstall)
                 {
+                    Console.WriteLine("Uninstalling deb");
                     session.PutFiles("files\\script.sh", "/");
                     session.ExecuteCommand("sh /script.sh"); //if uninstall == true then run uninstall script
-                    session.ExecuteCommand("killall -9 SpringBoard"); //respring
+                    respring(session, Directory.Exists("files\\Applications\\"));
                 }
             }
         }
