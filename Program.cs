@@ -90,6 +90,7 @@ namespace Unjailbreaker
             if (args.Contains("convert")) convert = true;
             if (args.Contains("uninstall")) uninstall = true;
             if (args.Contains("install")) install = true;
+            if (args.Contains("manual")) manual = true;
 
             if (manual)
             {
