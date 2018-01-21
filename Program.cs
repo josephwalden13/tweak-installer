@@ -16,12 +16,6 @@ namespace Unjailbreaker
     {
         static void Main(string[] args)
         {
-            if (!File.Exists(@"C:\Program Files\7-Zip\7z.exe"))
-            {
-                Console.WriteLine("This program requires 7zip to be installed. Please install it to continue :(");
-                Console.ReadLine();
-                return;
-            }
             bool install = false, uninstall = false, convert = false, manual = false;
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
@@ -73,11 +67,12 @@ namespace Unjailbreaker
                         deb = i;
                     }
                 }
+                Console.WriteLine("Extracting Deb");
                 using (ArchiveFile archiveFile = new ArchiveFile(deb))
                 {
                     archiveFile.Extract("temp");
                 }
-                var p = Process.Start(@"C:\Program Files\7-Zip\7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
                 p.WaitForExit();
                 using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
                 {
@@ -129,9 +124,9 @@ namespace Unjailbreaker
             c.Remove("DS_STORE");
             string s = "";
             c.Files.ForEach(i =>
-           {
-               s += ("rm " + i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)") + "\n").Replace("'", "\\'").Replace("@", "\\@"); //creates uninstall script for tweak (used if uninstall == true)
-           });
+                       {
+                           s += ("rm " + i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)") + "\n").Replace("'", "\\'").Replace("@", "\\@"); //creates uninstall script for tweak (used if uninstall == true)
+                       });
             File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
