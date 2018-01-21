@@ -76,7 +76,7 @@ namespace Unjailbreaker
                 {
                     archiveFile.Extract("temp");
                 }
-                var p = Process.Start(@"C:\Program Files\7-Zip\7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lmza") ? "lmza" : "gz") + " -o.");
+                var p = Process.Start(@"C:\Program Files\7-Zip\7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
                 p.WaitForExit();
                 using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
                 {
