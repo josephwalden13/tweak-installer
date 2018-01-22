@@ -1,4 +1,10 @@
-﻿using jLib;
+﻿//Copyright 2018 josephwalden
+//Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+using jLib;
 using SevenZipExtractor;
 using System;
 using System.Collections.Generic;
@@ -195,6 +201,11 @@ namespace Unjailbreaker
                 if (install)
                 {
                     Console.WriteLine("Installing");
+                    if (Directory.Exists("files\\Applications\\electra.app"))
+                    {
+                        var f = MessageBox.Show("Please do not try this");
+                        Environment.Exit(0);
+                    }
                     foreach (string dir in Directory.GetDirectories("files"))
                     {
                         session.PutFiles(dir, "/"); //put directories
@@ -257,6 +268,7 @@ namespace Unjailbreaker
                     session.ExecuteCommand("find /usr/ -type d -empty -delete");
                     session.ExecuteCommand("find /Applications/ -type d -empty -delete");
                     session.ExecuteCommand("find /Library/ -type d -empty -delete");
+                    session.ExecuteCommand("find /bootstrap/ -type d -empty -delete");
                     respring(session, Directory.Exists("files\\Applications\\"));
                 }
             }
