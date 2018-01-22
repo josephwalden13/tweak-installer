@@ -7,7 +7,7 @@
     <ProjectGuid>{808BAB80-BACE-4FBD-A5D1-670346591EB2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Unjailbreaker</RootNamespace>
-    <AssemblyName>Unjailbreaker</AssemblyName>
+    <AssemblyName>tic</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -59,6 +59,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Tweak Installer\Tweak Installer.csproj">
+      <Project>{60EA8A11-B29B-458C-A011-A21D487D4823}</Project>
+      <Name>Tweak Installer</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\Programming\Source\C#\jLib\jLib.csproj">
       <Project>{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}</Project>
       <Name>jLib</Name>

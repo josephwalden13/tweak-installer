@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Tweak_Installer;
 using WinSCP;
 
 namespace Unjailbreaker
@@ -234,6 +235,7 @@ namespace Unjailbreaker
                             session.ExecuteCommand("rm -rf /Applications/" + new DirectoryInfo(app).Name);
                         }
                     }
+                    Console.WriteLine("Locating and removing *some* empty folders");
                     session.ExecuteCommand("find /System/Library/Themes/ -type d -empty -delete");
                     session.ExecuteCommand("find /usr/ -type d -empty -delete");
                     session.ExecuteCommand("find /Applications/ -type d -empty -delete");
