@@ -93,6 +93,7 @@ namespace Unjailbreaker
             if (args.Contains("install")) install = true;
             if (args.Contains("manual")) manual = true;
 
+            bool ipa = false;
             if (manual)
             {
                 createDirIfDoesntExist("files");
@@ -103,7 +104,6 @@ namespace Unjailbreaker
                 emptyDir("temp");
                 deleteIfExists("data.tar");
                 string deb = "";
-                bool ipa = true;
                 foreach (string i in args)
                 {
                     if (i.Contains(".deb"))
@@ -226,7 +226,18 @@ namespace Unjailbreaker
                 {
                     Console.WriteLine("Uninstalling");
                     session.PutFiles("files\\script.sh", "/");
-                    session.ExecuteCommand("sh /script.sh"); //if uninstall == true then run uninstall script
+                    session.ExecuteCommand("sh /script.sh");
+                    if (ipa)
+                    {
+                        foreach (string app in Directory.GetDirectories("files\\Applications\\"))
+                        {
+                            session.ExecuteCommand("rm -rf /Applications/" + new DirectoryInfo(app).Name);
+                        }
+                    }
+                    session.ExecuteCommand("find /System/Library/Themes/ -type d -empty -delete");
+                    session.ExecuteCommand("find /usr/ -type d -empty -delete");
+                    session.ExecuteCommand("find /Applications/ -type d -empty -delete");
+                    session.ExecuteCommand("find /Library/ -type d -empty -delete");
                     respring(session, Directory.Exists("files\\Applications\\"));
                 }
             }
