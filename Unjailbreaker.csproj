@@ -59,6 +59,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PlistCS\PlistCS.csproj">
+      <Project>{E4362121-9BFA-4F11-A8CC-63382D4C2B52}</Project>
+      <Name>PlistCS</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Tweak Installer\Tweak Installer.csproj">
       <Project>{60EA8A11-B29B-458C-A011-A21D487D4823}</Project>
       <Name>Tweak Installer</Name>

@@ -5,6 +5,7 @@
 
 
 using jLib;
+using PlistCS;
 using SevenZipExtractor;
 using System;
 using System.Collections.Generic;
@@ -236,8 +237,10 @@ namespace Unjailbreaker
                             {
                                 if (i.Contains("\\Applications\\"))
                                 {
+                                    Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
+                                    string main_exe = dict["CFBundleExecutable"].ToString();
                                     bool sign = false;
-                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                    if (new FileInfo(i).Name == main_exe) sign = true;
                                     if (!sign)
                                     {
                                         if (i.Split('.').Last() == "dylib") sign = true;
