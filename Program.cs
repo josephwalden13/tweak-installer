@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,6 +58,21 @@ namespace Unjailbreaker
         static void Main(string[] args)
         {
             bool install = false, uninstall = false, convert = false, manual = false, jtool = false;
+
+            //check for updates
+            try
+            {
+                using (WebClient client = new WebClient())
+                {
+                    string version = client.DownloadString("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/version.txt");
+                    string current = File.ReadAllText("version.txt");
+                    if (current != version)
+                    {
+                        Console.WriteLine($"Version {version} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases");
+                    }
+                }
+            }
+            catch { }
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
