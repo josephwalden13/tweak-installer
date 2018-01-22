@@ -68,7 +68,7 @@ namespace Unjailbreaker
                     string current = File.ReadAllText("version.txt");
                     if (current != version)
                     {
-                        Console.WriteLine($"Version {version} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress any key to continue...");
+                        Console.WriteLine($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress any key to continue...");
                         Console.ReadLine();
                     }
                 }
@@ -136,7 +136,7 @@ namespace Unjailbreaker
                 }
                 if (!ipa)
                 {
-                    Console.WriteLine("Extracting Deb");
+                    Console.WriteLine("Extracting");
                     using (ArchiveFile archiveFile = new ArchiveFile(deb))
                     {
                         archiveFile.Extract("temp");
