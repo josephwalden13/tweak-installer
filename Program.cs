@@ -66,6 +66,7 @@ namespace Unjailbreaker
             string user = data[1];
             string password = data[2];
 
+            Console.WriteLine("Connecting");
             SessionOptions sessionOptions = new SessionOptions
             {
                 Protocol = Protocol.Sftp,
@@ -94,10 +95,7 @@ namespace Unjailbreaker
 
             if (manual)
             {
-                //this is mostly pointless
                 createDirIfDoesntExist("files");
-                Console.WriteLine("Please extract the deb file's data.tar to 'files' and press any key to " + (convert ? "begin conversion and " : "") + (install ? "install" : uninstall ? "uninstall" : ""));
-                Console.ReadLine();
             }
             else
             {
@@ -105,50 +103,66 @@ namespace Unjailbreaker
                 emptyDir("temp");
                 deleteIfExists("data.tar");
                 string deb = "";
+                bool ipa = true;
                 foreach (string i in args)
                 {
                     if (i.Contains(".deb"))
                     {
                         deb = i;
                     }
+                    if (i.Contains(".ipa"))
+                    {
+                        deb = i;
+                        ipa = true;
+                    }
                 }
-                Console.WriteLine("Extracting Deb");
-                using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                if (!ipa)
                 {
-                    archiveFile.Extract("temp");
+                    Console.WriteLine("Extracting Deb");
+                    using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                    {
+                        archiveFile.Extract("temp");
+                    }
+                    var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                    p.WaitForExit();
+                    using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                    {
+                        archiveFile.Extract("files");
+                    }
                 }
-                var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                p.WaitForExit();
-                using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                else
                 {
-                    archiveFile.Extract("files");
+                    Console.WriteLine("Extracting IPA");
+                    convert = false;
+                    using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                    {
+                        archiveFile.Extract("temp");
+                    }
+                    Directory.Move("temp\\Payload", "files\\Applications");
                 }
             }
             string name = "script";
-            if (args.Length > 0) //contains options?
+            if (convert) //convert to electra format
             {
-                if (convert) //convert to electra format
+                Console.WriteLine("Converting to electra tweak format");
+                createDirIfDoesntExist("files\\bootstrap");
+                createDirIfDoesntExist("files\\bootstrap\\Library");
+                if (Directory.Exists("files\\Library\\MobileSubstrate\\"))
                 {
-                    Console.WriteLine("Converting to electra tweak format");
-                    createDirIfDoesntExist("files\\bootstrap");
-                    createDirIfDoesntExist("files\\bootstrap\\Library");
-                    if (Directory.Exists("files\\Library\\MobileSubstrate\\"))
+                    createDirIfDoesntExist("files\\usr\\lib\\SBInject");
+                    foreach (string file in Directory.GetFiles("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
-                        createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                        foreach (string file in Directory.GetFiles("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
-                        {
-                            File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
-                        }
-                        foreach (string file in Directory.GetDirectories("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
-                        {
-                            Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
-                        }
-                        Directory.Delete("files\\Library\\MobileSubstrate", true);
+                        File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
                     }
-                    moveDirIfPresent("files\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
-                    moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
-                    moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                    foreach (string file in Directory.GetDirectories("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
+                    {
+                        Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
+                    }
+                    Directory.Delete("files\\Library\\MobileSubstrate", true);
                 }
+                moveDirIfPresent("files\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
+                moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
+                moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
             }
             Crawler c = new Crawler("files", true); //gets all files in the tweak
             c.Remove("DS_STORE");
@@ -162,7 +176,7 @@ namespace Unjailbreaker
             {
                 if (install)
                 {
-                    Console.WriteLine("Installing deb");
+                    Console.WriteLine("Installing");
                     foreach (string dir in Directory.GetDirectories("files"))
                     {
                         session.PutFiles(dir, "/"); //put directories
@@ -210,7 +224,7 @@ namespace Unjailbreaker
                 }
                 else if (uninstall)
                 {
-                    Console.WriteLine("Uninstalling deb");
+                    Console.WriteLine("Uninstalling");
                     session.PutFiles("files\\script.sh", "/");
                     session.ExecuteCommand("sh /script.sh"); //if uninstall == true then run uninstall script
                     respring(session, Directory.Exists("files\\Applications\\"));
