@@ -63,6 +63,11 @@ namespace Unjailbreaker
         }
         static void Main(string[] args)
         {
+            if (!File.Exists("settings"))
+            {
+                string[] def = new string[3];
+                File.WriteAllLines("settings", def);
+            }
             bool install = false, uninstall = false, convert = false, manual = false, jtool = false;
 
             //check for updates
