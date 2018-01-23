@@ -6,13 +6,6 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Thanks to Xer3 Deed (dauphin327) for helping me find and fix the reboot bug.
-
-Thanks to https://github.com/animetrics/PlistCS for their plist library
-
-and thanks to https://github.com/adoconnection/SevenZipExtractor for their 7z library
-
-
 UI Source Code here : https://github.com/josephwalden13/Tweak-Installer-GUI
 
 A tweak installer for Elecra and other jailbreaks which support sftp. Runs on windows currently but I'm planning on porting it to other OS's including maybe an on device app. 
