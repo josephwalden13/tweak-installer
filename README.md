@@ -10,7 +10,7 @@ Thanks to Xer3 Deed (dauphin327) for helping me find and fix the reboot bug.
 
 Thanks to https://github.com/animetrics/PlistCS for their plist library
 
-and Thanks to https://github.com/adoconnection/SevenZipExtractor for their 7z library
+and thanks to https://github.com/adoconnection/SevenZipExtractor for their 7z library
 
 
 UI Source Code here : https://github.com/josephwalden13/Tweak-Installer-GUI
