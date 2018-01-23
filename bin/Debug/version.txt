@@ -1,1 +1,1 @@
-beta7 (hopefully fixes reboots)
+beta8 (adds a lot of features including multiple deb / ipa installs in one go)

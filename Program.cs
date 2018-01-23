@@ -24,19 +24,23 @@ namespace Unjailbreaker
 {
     class Program
     {
+        static bool install = false, uninstall = false, convert = false, manual = false, jtool = false, update = true, uicache = false, respring_override = false, uicache_override = false, onlyPerformSSHActions = false;
         static string convert_path(string i)
         {
             return i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
         }
-        static void respring(Session session, bool uicache = false)
+        static void finish(Session session)
         {
-            if (uicache)
+            if (uicache && !uicache_override)
             {
                 Console.WriteLine("Running uicache (may take up to 30 seconds)");
                 session.ExecuteCommand("uicache"); //respring
             }
-            Console.WriteLine("Respringing...");
-            session.ExecuteCommand("killall -9 SpringBoard"); //respring
+            if (!respring_override)
+            {
+                Console.WriteLine("Respringing...");
+                session.ExecuteCommand("killall -9 SpringBoard"); //respring
+            }
         }
         static void createDirIfDoesntExist(string path)
         {
@@ -69,23 +73,33 @@ namespace Unjailbreaker
                 string[] def = new string[3];
                 File.WriteAllLines("settings", def);
             }
-            bool install = false, uninstall = false, convert = false, manual = false, jtool = false;
+            if (args.Contains("convert")) convert = true;
+            if (args.Contains("uninstall")) uninstall = true;
+            if (args.Contains("install")) install = true;
+            if (args.Contains("manual")) manual = true;
+            if (args.Contains("dont-update")) update = false;
+            if (args.Contains("dont-refresh")) uicache_override = true;
+            if (args.Contains("dont-respring")) respring_override = true;
+            if (args.Contains("no-install")) onlyPerformSSHActions = true;
 
-            //check for updates
-            try
+            if (update)
             {
-                using (WebClient client = new WebClient())
+                //check for updates
+                try
                 {
-                    string version = client.DownloadString("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/version.txt");
-                    string current = File.ReadAllText("version.txt");
-                    if (current != version)
+                    using (WebClient client = new WebClient())
                     {
-                        Console.WriteLine($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress any key to continue...");
-                        Console.ReadLine();
+                        string version = client.DownloadString("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/version.txt");
+                        string current = File.ReadAllText("version.txt");
+                        if (current != version)
+                        {
+                            Console.WriteLine($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress any key to continue...");
+                            Console.ReadLine();
+                        }
                     }
                 }
+                catch { }
             }
-            catch { }
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
@@ -108,6 +122,13 @@ namespace Unjailbreaker
             Session session = new Session();
             session.Open(sessionOptions);
 
+            if (onlyPerformSSHActions)
+            {
+                uicache = true;
+                finish(session);
+                return;
+            }
+
             if (session.FileExists("/usr/lib/SBInject"))
             {
                 convert = true;
@@ -118,57 +139,60 @@ namespace Unjailbreaker
                 jtool = true;
             }
 
-            if (args.Contains("convert")) convert = true;
-            if (args.Contains("uninstall")) uninstall = true;
-            if (args.Contains("install")) install = true;
-            if (args.Contains("manual")) manual = true;
-
-            bool ipa = false;
             if (manual)
             {
                 createDirIfDoesntExist("files");
+                Console.WriteLine("Please move rootfs file into 'files' and press any key to continue");
             }
             else
             {
                 emptyDir("files");
                 emptyDir("temp");
                 deleteIfExists("data.tar");
-                string deb = "";
+                List<string> debs = new List<string>();
                 foreach (string i in args)
                 {
                     if (i.Contains(".deb"))
                     {
-                        deb = i;
+                        debs.Add(i);
                     }
                     if (i.Contains(".ipa"))
                     {
-                        deb = i;
-                        ipa = true;
+                        debs.Add(i);
                     }
                 }
-                if (!ipa)
+                foreach (string deb in debs)
                 {
-                    Console.WriteLine("Extracting");
-                    using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                    if (deb.Contains(".deb"))
                     {
-                        archiveFile.Extract("temp");
+                        Console.WriteLine("Extracting " + deb);
+                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        {
+                            archiveFile.Extract("temp");
+                        }
+                        var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                        p.WaitForExit();
+                        using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                        {
+                            archiveFile.Extract("files");
+                        }
+                        emptyDir("temp");
+                        deleteIfExists("data.tar");
                     }
-                    var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                    p.WaitForExit();
-                    using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                    else
                     {
-                        archiveFile.Extract("files");
+                        Console.WriteLine("Extracting IPA " + deb);
+                        convert = false;
+                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        {
+                            archiveFile.Extract("temp");
+                        }
+                        createDirIfDoesntExist("files\\Applications");
+                        foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
+                        {
+                            Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                        }
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Extracting IPA");
-                    convert = false;
-                    using (ArchiveFile archiveFile = new ArchiveFile(deb))
-                    {
-                        archiveFile.Extract("temp");
-                    }
-                    Directory.Move("temp\\Payload", "files\\Applications");
                 }
             }
             string name = "script";
@@ -226,6 +250,7 @@ namespace Unjailbreaker
                     }
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
+                        Console.WriteLine("Signing applications");
                         foreach (var app in Directory.GetDirectories("files\\Applications\\"))
                         {
                             Crawler crawler = new Crawler(app);
@@ -233,6 +258,7 @@ namespace Unjailbreaker
                             {
                                 if (i.Contains("\\Applications\\"))
                                 {
+                                    uicache = true;
                                     //Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
                                     //string main_exe = dict["CFBundleExecutable"].ToString();
                                     bool sign = false;
@@ -245,7 +271,6 @@ namespace Unjailbreaker
                                     i = convert_path(i);
                                     if (sign)
                                     {
-                                        Console.WriteLine("Signing " + i);
                                         session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
                                         session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
                                         session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
@@ -254,15 +279,16 @@ namespace Unjailbreaker
                             });
                         }
                     }
-                    respring(session, Directory.Exists("files\\Applications\\"));
+                    finish(session);
                 }
                 else if (uninstall)
                 {
                     Console.WriteLine("Uninstalling");
                     session.PutFiles("files\\script.sh", "/");
                     session.ExecuteCommand("sh /script.sh");
-                    if (ipa)
+                    if (Directory.Exists("files\\Applications"))
                     {
+                        uicache = true;
                         foreach (string app in Directory.GetDirectories("files\\Applications\\"))
                         {
                             session.ExecuteCommand("rm -rf /Applications/" + new DirectoryInfo(app).Name);
@@ -274,7 +300,7 @@ namespace Unjailbreaker
                     session.ExecuteCommand("find /Applications/ -type d -empty -delete");
                     session.ExecuteCommand("find /Library/ -type d -empty -delete");
                     session.ExecuteCommand("find /bootstrap/ -type d -empty -delete");
-                    respring(session, Directory.Exists("files\\Applications\\"));
+                    finish(session);
                 }
             }
         }
