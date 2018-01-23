@@ -1,1 +1,1 @@
-beta6,1 (Pretty important fix)
+beta7 (hopefully fixes reboots)

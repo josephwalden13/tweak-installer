@@ -207,6 +207,10 @@ namespace Unjailbreaker
                 if (install)
                 {
                     Console.WriteLine("Installing");
+                    if (Directory.Exists("files\\Applications") && jtool)
+                    {
+                        File.Copy("plat.ent", "files\\plat.ent", true);
+                    }
                     if (Directory.Exists("files\\Applications\\electra.app"))
                     {
                         var f = MessageBox.Show("Please do not try this");
@@ -222,14 +226,6 @@ namespace Unjailbreaker
                     }
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
-                        if (convert)
-                        {
-                            session.ExecuteCommand("jtool --ent /bootstrap/bin/ls >> ~/plat.ent");
-                        }
-                        else
-                        {
-                            session.ExecuteCommand("jtool --ent /jb/bin/ls >> ~/plat.ent");
-                        }
                         foreach (var app in Directory.GetDirectories("files\\Applications\\"))
                         {
                             Crawler crawler = new Crawler(app);
@@ -237,10 +233,11 @@ namespace Unjailbreaker
                             {
                                 if (i.Contains("\\Applications\\"))
                                 {
-                                    Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
-                                    string main_exe = dict["CFBundleExecutable"].ToString();
+                                    //Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
+                                    //string main_exe = dict["CFBundleExecutable"].ToString();
                                     bool sign = false;
-                                    if (new FileInfo(i).Name == main_exe) sign = true;
+                                    //if (new FileInfo(i).Name == main_exe) sign = true; will fix
+                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
                                     if (!sign)
                                     {
                                         if (i.Split('.').Last() == "dylib") sign = true;
@@ -251,7 +248,7 @@ namespace Unjailbreaker
                                         Console.WriteLine("Signing " + i);
                                         session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
                                         session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                        session.ExecuteCommand("jtool --sign --ent ~/plat.ent --inplace " + i);
+                                        session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
                                     }
                                 }
                             });
