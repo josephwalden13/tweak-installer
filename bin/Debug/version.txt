@@ -1,1 +1,1 @@
-beta9 (new ui, installs zips)
+beta9,1 (fixes signing)
