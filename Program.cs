@@ -41,6 +41,7 @@ namespace Unjailbreaker
                 Console.WriteLine("Respringing...");
                 session.ExecuteCommand("killall -9 SpringBoard"); //respring
             }
+            session.Close();
         }
         static void createDirIfDoesntExist(string path)
         {
