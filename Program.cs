@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.VisualBasic.FileIO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -94,7 +95,7 @@ namespace Unjailbreaker
                         string current = File.ReadAllText("version.txt");
                         if (current != version)
                         {
-                            Console.WriteLine($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress any key to continue...");
+                            Console.WriteLine($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nPress enter to continue...");
                             Console.ReadLine();
                         }
                     }
@@ -149,7 +150,8 @@ namespace Unjailbreaker
             if (manual)
             {
                 createDirIfDoesntExist("files");
-                Console.WriteLine("Please move rootfs file into 'files' and press any key to continue");
+                Console.WriteLine("Please move rootfs file into 'files' and press enter to continue");
+                Console.ReadLine();
             }
             else
             {
@@ -167,11 +169,16 @@ namespace Unjailbreaker
                     {
                         debs.Add(i);
                     }
+                    if (i.Contains(".zip"))
+                    {
+                        debs.Add(i);
+                    }
                 }
                 foreach (string deb in debs)
                 {
                     if (deb.Contains(".deb"))
                     {
+                        emptyDir("temp");
                         Console.WriteLine("Extracting " + deb);
                         using (ArchiveFile archiveFile = new ArchiveFile(deb))
                         {
@@ -186,10 +193,10 @@ namespace Unjailbreaker
                         emptyDir("temp");
                         deleteIfExists("data.tar");
                     }
-                    else
+                    else if (deb.Contains(".ipa"))
                     {
+                        emptyDir("temp");
                         Console.WriteLine("Extracting IPA " + deb);
-                        convert = false;
                         using (ArchiveFile archiveFile = new ArchiveFile(deb))
                         {
                             archiveFile.Extract("temp");
@@ -198,6 +205,67 @@ namespace Unjailbreaker
                         foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
                         {
                             Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                        }
+                    }
+                    else
+                    {
+                        emptyDir("temp");
+                        Console.WriteLine("Extracting Zip " + deb);
+                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        {
+                            archiveFile.Extract("temp");
+                        }
+                        if (Directory.Exists("temp\\bootstrap\\"))
+                        {
+                            Console.WriteLine("Found bootstrap");
+                            if (Directory.Exists("temp\\bootstrap\\Library\\SBInject\\"))
+                            {
+                                createDirIfDoesntExist("files\\usr\\lib\\SBInject");
+                                foreach (string file in Directory.GetFiles("temp\\bootstrap\\SBInject\\"))
+                                {
+                                    File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
+                                }
+                                foreach (string file in Directory.GetDirectories("temp\\bootstrap\\SBInject\\"))
+                                {
+                                    Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
+                                }
+                                Directory.Delete("temp\\bootstrap\\SBInject", true);
+                            }
+                            moveDirIfPresent("temp\\bootstrap\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
+                            foreach (string dir in Directory.GetDirectories("temp"))
+                            {
+                                FileSystem.MoveDirectory(dir, "files\\" + new DirectoryInfo(dir).Name, true);
+                            }
+                            foreach (string file in Directory.GetFiles("temp"))
+                            {
+                                File.Copy(file, "files\\" + new FileInfo(file).Name, true);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Unrecognised format. Determining ability to install");
+                            List<string> exts = new List<string>();
+                            foreach (string i in Directory.GetFiles("temp"))
+                            {
+                                string ext = new FileInfo(i).Extension;
+                                if (!exts.Contains(ext)) exts.Add(ext);
+                            }
+                            if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
+                            {
+                                Console.WriteLine("Substrate Addon. Installing");
+                                createDirIfDoesntExist("files\\usr\\lib\\SBInject");
+                                foreach (string i in Directory.GetFiles("temp"))
+                                {
+                                    File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                }
+                                moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
+                                moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Unsafe to install. To install this tweak you must do so manually. Press enter to continue...");
+                                Console.ReadLine();
+                            }
                         }
                     }
                 }

@@ -34,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="SevenZipExtractor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\SevenZipExtractor.1.0.11\lib\net45\SevenZipExtractor.dll</HintPath>
     </Reference>
