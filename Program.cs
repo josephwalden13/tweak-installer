@@ -133,6 +133,12 @@ namespace Unjailbreaker
             if (session.FileExists("/usr/lib/SBInject"))
             {
                 convert = true;
+                if (!session.FileExists("/System/Library/Themes"))
+                {
+                    session.CreateDirectory("/System/Library/Themes");
+                    session.ExecuteCommand("touch /System/Library/Themes/dont-delete");
+                    Console.WriteLine("Themes folder missing. Touching /System/Library/Themes/dont-delete to prevent this in future");
+                }
                 jtool = true;
             }
             if (session.FileExists("/jb/"))
