@@ -109,7 +109,7 @@ namespace Unjailbreaker
                 data[i] = data[i].Split('#')[0];
             }
             string ip = data[0];
-            string user = data[1];
+            string user = "root"; //data[1];
             string password = data[2];
 
             Console.WriteLine("Connecting");
@@ -122,7 +122,25 @@ namespace Unjailbreaker
                 GiveUpSecurityAndAcceptAnySshHostKey = true
             };
             Session session = new Session();
-            session.Open(sessionOptions);
+            try
+            {
+                session.Open(sessionOptions);
+            }
+            catch (SessionRemoteException e)
+            {
+                if (e.ToString().Contains("refused")) Console.WriteLine("Error: SSH Connection Refused\nAre you jailbroken?\nHave you entered your devices IP correctly?");
+                else if (e.ToString().Contains("Access denied")) Console.WriteLine("Error: SSH Connection Refused due to incorrect credentials. Are you sure you typed your password correctly?");
+                else if (e.ToString().Contains("Cannot initialize SFTP protocol")) Console.WriteLine("Error: SFTP not available. Make sure you have sftp installed by default. For Yalu or Meridian, please install \"SCP and SFTP for dropbear\" by coolstar. For LibreIOS, make sure SFTP is moved to /usr/bin/.");
+                else
+                {
+                    Console.WriteLine("Unknown Error. Please use the bug red bug report link and include some form of crash report. Error report copying to clipboard.");
+                    Thread.Sleep(2000);
+                    Clipboard.SetText(e.ToString());
+                    throw e;
+                }
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
 
             if (onlyPerformSSHActions)
             {
@@ -180,16 +198,25 @@ namespace Unjailbreaker
                     {
                         emptyDir("temp");
                         Console.WriteLine("Extracting " + deb);
-                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        try
                         {
-                            archiveFile.Extract("temp");
+                            using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                            {
+                                archiveFile.Extract("temp");
+                            }
+                            var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                            p.WaitForExit();
+                            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                            {
+                                archiveFile.Extract("files");
+                            }
                         }
-                        var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                        p.WaitForExit();
-                        using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                        catch
                         {
-                            archiveFile.Extract("files");
-                        }
+                            Console.WriteLine("Not a valid deb file");
+                            Console.ReadLine();
+                            Environment.Exit(0);
+                        };
                         emptyDir("temp");
                         deleteIfExists("data.tar");
                     }
@@ -197,23 +224,41 @@ namespace Unjailbreaker
                     {
                         emptyDir("temp");
                         Console.WriteLine("Extracting IPA " + deb);
-                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        try
                         {
-                            archiveFile.Extract("temp");
+                            using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                            {
+                                archiveFile.Extract("temp");
+                            }
+                            createDirIfDoesntExist("files\\Applications");
+                            foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
+                            {
+                                Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                            }
                         }
-                        createDirIfDoesntExist("files\\Applications");
-                        foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
+                        catch
                         {
-                            Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                            Console.WriteLine("Not a valid IPA");
+                            Console.ReadLine();
+                            Environment.Exit(0);
                         }
                     }
                     else
                     {
                         emptyDir("temp");
                         Console.WriteLine("Extracting Zip " + deb);
-                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                        try
                         {
-                            archiveFile.Extract("temp");
+                            using (ArchiveFile archiveFile = new ArchiveFile(deb))
+                            {
+                                archiveFile.Extract("temp");
+                            }
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Not a valid ZIP archive");
+                            Console.ReadLine();
+                            Environment.Exit(0);
                         }
                         if (Directory.Exists("temp\\bootstrap\\"))
                         {
@@ -297,9 +342,9 @@ namespace Unjailbreaker
             c.Remove("DS_STORE");
             string s = "";
             c.Files.ForEach(i =>
-                       {
-                           s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
-                       });
+                                   {
+                                       s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
+                                   });
             File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
@@ -330,25 +375,25 @@ namespace Unjailbreaker
                         {
                             Crawler crawler = new Crawler(app);
                             c.Files.ForEach(i =>
-                            {
-                                if (i.Contains("\\Applications\\"))
-                                {
-                                    uicache = true;
-                                    bool sign = false;
-                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
-                                    if (!sign)
-                                    {
-                                        if (i.Split('.').Last() == "dylib") sign = true;
-                                    }
-                                    i = convert_path(i);
-                                    if (sign)
-                                    {
-                                        session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                        session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                        session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
-                                    }
-                                }
-                            });
+                                                        {
+                                                            if (i.Contains("\\Applications\\"))
+                                                            {
+                                                                uicache = true;
+                                                                bool sign = false;
+                                                                if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                                                if (!sign)
+                                                                {
+                                                                    if (i.Split('.').Last() == "dylib") sign = true;
+                                                                }
+                                                                i = convert_path(i);
+                                                                if (sign)
+                                                                {
+                                                                    session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                                                    session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                                                    session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                                                }
+                                                            }
+                                                        });
                         }
                     }
                     finish(session);

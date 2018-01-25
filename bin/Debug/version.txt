@@ -1,1 +1,1 @@
-beta9,1 (fixes signing)
+1.0 (not beta anymore)
