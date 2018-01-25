@@ -13,3 +13,5 @@ Usage:
   tic.exe [install] [uninstall] [manual] "optional path to deb file"
 
 Tweak Installer.exe is bundled with all releases so that can be used instead of the command line for easier usage
+
+Donate link: http://paypal.me/JosephWalden
