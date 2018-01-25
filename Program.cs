@@ -70,10 +70,10 @@ namespace Unjailbreaker
         }
         static void Main(string[] args)
         {
-            if (!File.Exists("settings"))
+            if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "settings"))
             {
                 string[] def = new string[3];
-                File.WriteAllLines("settings", def);
+                File.WriteAllLines(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "settings", def);
             }
             if (args.Contains("convert")) convert = true;
             if (args.Contains("uninstall")) uninstall = true;
@@ -83,6 +83,8 @@ namespace Unjailbreaker
             if (args.Contains("dont-refresh")) uicache_override = true;
             if (args.Contains("dont-respring")) respring_override = true;
             if (args.Contains("no-install")) onlyPerformSSHActions = true;
+
+            createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\");
 
             if (update)
             {
@@ -103,7 +105,7 @@ namespace Unjailbreaker
                 catch { }
             }
 
-            string[] data = File.ReadAllLines("settings"); //get ssh settings
+            string[] data = File.ReadAllLines(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
             {
                 data[i] = data[i].Split('#')[0];
@@ -167,14 +169,14 @@ namespace Unjailbreaker
 
             if (manual)
             {
-                createDirIfDoesntExist("files");
+                createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
                 Console.WriteLine("Please move rootfs file into 'files' and press enter to continue");
                 Console.ReadLine();
             }
             else
             {
-                emptyDir("files");
-                emptyDir("temp");
+                emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
+                emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                 deleteIfExists("data.tar");
                 List<string> debs = new List<string>();
                 foreach (string i in args)
@@ -196,44 +198,44 @@ namespace Unjailbreaker
                 {
                     if (deb.Contains(".deb"))
                     {
-                        emptyDir("temp");
+                        emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         Console.WriteLine("Extracting " + deb);
                         try
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
-                            {
-                                archiveFile.Extract("temp");
-                            }
-                            var p = Process.Start(@"7z.exe", "e temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                            p.WaitForExit();
-                            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-                            {
-                                archiveFile.Extract("files");
-                            }
-                        }
-                        catch
                         {
-                            Console.WriteLine("Not a valid deb file");
-                            Console.ReadLine();
-                            Environment.Exit(0);
-                        };
-                        emptyDir("temp");
+                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
+                        }
+                        var p = Process.Start(@"7z.exe", "e " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar." + (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                        p.WaitForExit();
+                        using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                        {
+                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
+                        }
+                    }
+                        catch
+                    {
+                        Console.WriteLine("Not a valid deb file");
+                        Console.ReadLine();
+                        Environment.Exit(0);
+                    };
+                    emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         deleteIfExists("data.tar");
                     }
                     else if (deb.Contains(".ipa"))
                     {
-                        emptyDir("temp");
+                        emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         Console.WriteLine("Extracting IPA " + deb);
                         try
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
                             {
-                                archiveFile.Extract("temp");
+                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                             }
-                            createDirIfDoesntExist("files\\Applications");
-                            foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
+                            createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications");
+                            foreach (string app in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\Payload\\"))
                             {
-                                Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                                Directory.Move(app, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\" + new DirectoryInfo(app).Name);
                             }
                         }
                         catch
@@ -245,13 +247,13 @@ namespace Unjailbreaker
                     }
                     else
                     {
-                        emptyDir("temp");
+                        emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         Console.WriteLine("Extracting Zip " + deb);
                         try
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
                             {
-                                archiveFile.Extract("temp");
+                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                             }
                         }
                         catch
@@ -260,37 +262,37 @@ namespace Unjailbreaker
                             Console.ReadLine();
                             Environment.Exit(0);
                         }
-                        if (Directory.Exists("temp\\bootstrap\\"))
+                        if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\"))
                         {
                             Console.WriteLine("Found bootstrap");
-                            if (Directory.Exists("temp\\bootstrap\\Library\\SBInject\\"))
+                            if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\Library\\SBInject\\"))
                             {
-                                createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                                foreach (string file in Directory.GetFiles("temp\\bootstrap\\SBInject\\"))
+                                createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject");
+                                foreach (string file in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\Library\\SBInject\\"))
                                 {
-                                    File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
+                                    File.Move(file, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
                                 }
-                                foreach (string file in Directory.GetDirectories("temp\\bootstrap\\SBInject\\"))
+                                foreach (string file in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\Library\\SBInject\\"))
                                 {
-                                    Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
+                                    Directory.Move(file, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
                                 }
-                                Directory.Delete("temp\\bootstrap\\SBInject", true);
+                                Directory.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\Library\\SBInject", true);
                             }
-                            moveDirIfPresent("temp\\bootstrap\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
-                            foreach (string dir in Directory.GetDirectories("temp"))
+                            moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\Library\\Themes\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\System\\Library\\Themes\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\System\\Library\\");
+                            foreach (string dir in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp"))
                             {
-                                FileSystem.MoveDirectory(dir, "files\\" + new DirectoryInfo(dir).Name, true);
+                                FileSystem.MoveDirectory(dir, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\" + new DirectoryInfo(dir).Name, true);
                             }
-                            foreach (string file in Directory.GetFiles("temp"))
+                            foreach (string file in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp"))
                             {
-                                File.Copy(file, "files\\" + new FileInfo(file).Name, true);
+                                File.Copy(file, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\" + new FileInfo(file).Name, true);
                             }
                         }
                         else
                         {
                             Console.WriteLine("Unrecognised format. Determining ability to install");
                             List<string> exts = new List<string>();
-                            foreach (string i in Directory.GetFiles("temp"))
+                            foreach (string i in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp"))
                             {
                                 string ext = new FileInfo(i).Extension;
                                 if (!exts.Contains(ext)) exts.Add(ext);
@@ -298,13 +300,13 @@ namespace Unjailbreaker
                             if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
                             {
                                 Console.WriteLine("Substrate Addon. Installing");
-                                createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                                foreach (string i in Directory.GetFiles("temp"))
+                                createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject");
+                                foreach (string i in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp"))
                                 {
-                                    File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                    File.Copy(i, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
                                 }
-                                moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
-                                moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                                moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\PreferenceBundles\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap\\Library\\PreferenceBundles\\");
+                                moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\PreferenceLoader\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap\\Library\\PreferenceLoader\\");
                             }
                             else
                             {
@@ -319,81 +321,81 @@ namespace Unjailbreaker
             if (convert) //convert to electra format
             {
                 Console.WriteLine("Converting to electra tweak format");
-                createDirIfDoesntExist("files\\bootstrap");
-                createDirIfDoesntExist("files\\bootstrap\\Library");
-                if (Directory.Exists("files\\Library\\MobileSubstrate\\"))
+                createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap");
+                createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap\\Library");
+                if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\MobileSubstrate\\"))
                 {
-                    createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                    foreach (string file in Directory.GetFiles("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
+                    createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject");
+                    foreach (string file in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
-                        File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
+                        File.Move(file, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
                     }
-                    foreach (string file in Directory.GetDirectories("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
+                    foreach (string file in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
-                        Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
+                        Directory.Move(file, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
                     }
-                    Directory.Delete("files\\Library\\MobileSubstrate", true);
+                    Directory.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\MobileSubstrate", true);
                 }
-                moveDirIfPresent("files\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
-                moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
-                moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\Themes\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
+                moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\PreferenceBundles\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap\\Library\\PreferenceBundles\\");
+                moveDirIfPresent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Library\\PreferenceLoader\\", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\bootstrap\\Library\\PreferenceLoader\\");
             }
-            Crawler c = new Crawler("files", true); //gets all files in the tweak
+            Crawler c = new Crawler(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files", true); //gets all files in the tweak
             c.Remove("DS_STORE");
             string s = "";
             c.Files.ForEach(i =>
                                    {
                                        s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
                                    });
-            File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
+            File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
                 if (install)
                 {
                     Console.WriteLine("Installing");
-                    if (Directory.Exists("files\\Applications") && jtool)
+                    if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications") && jtool)
                     {
-                        File.Copy("plat.ent", "files\\plat.ent", true);
+                        File.Copy("plat.ent", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\plat.ent", true);
                     }
-                    if (Directory.Exists("files\\Applications\\electra.app"))
+                    if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\electra.app"))
                     {
                         var f = MessageBox.Show("Please do not try this");
                         Environment.Exit(0);
                     }
-                    foreach (string dir in Directory.GetDirectories("files"))
+                    foreach (string dir in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files"))
                     {
                         session.PutFiles(dir, "/"); //put directories
                     }
-                    foreach (string file in Directory.GetFiles("files"))
+                    foreach (string file in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files"))
                     {
                         session.PutFiles(file, "/"); //put files
                     }
-                    if (Directory.Exists("files\\Applications") && jtool)
+                    if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications") && jtool)
                     {
                         Console.WriteLine("Signing applications");
-                        foreach (var app in Directory.GetDirectories("files\\Applications\\"))
+                        foreach (var app in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\"))
                         {
                             Crawler crawler = new Crawler(app);
                             c.Files.ForEach(i =>
-                                                        {
-                                                            if (i.Contains("\\Applications\\"))
-                                                            {
-                                                                uicache = true;
-                                                                bool sign = false;
-                                                                if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
-                                                                if (!sign)
-                                                                {
-                                                                    if (i.Split('.').Last() == "dylib") sign = true;
-                                                                }
-                                                                i = convert_path(i);
-                                                                if (sign)
-                                                                {
-                                                                    session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                                                    session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                                                    session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
-                                                                }
-                                                            }
-                                                        });
+                            {
+                                if (i.Contains("\\Applications\\"))
+                                {
+                                    uicache = true;
+                                    bool sign = false;
+                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                    if (!sign)
+                                    {
+                                        if (i.Split('.').Last() == "dylib") sign = true;
+                                    }
+                                    i = convert_path(i);
+                                    if (sign)
+                                    {
+                                        session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                        session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                        session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                    }
+                                }
+                            });
                         }
                     }
                     finish(session);
@@ -401,12 +403,12 @@ namespace Unjailbreaker
                 else if (uninstall)
                 {
                     Console.WriteLine("Uninstalling");
-                    session.PutFiles("files\\script.sh", "/");
+                    session.PutFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\script.sh", "/");
                     session.ExecuteCommand("sh /script.sh");
-                    if (Directory.Exists("files\\Applications"))
+                    if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications"))
                     {
                         uicache = true;
-                        foreach (string app in Directory.GetDirectories("files\\Applications\\"))
+                        foreach (string app in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\"))
                         {
                             session.ExecuteCommand("rm -rf /Applications/" + new DirectoryInfo(app).Name);
                         }
