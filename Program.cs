@@ -201,24 +201,24 @@ namespace Unjailbreaker
                     {
                         emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         Console.WriteLine("Extracting " + deb);
-                        try
+                        //try
+                        //{
+                        using (ArchiveFile archiveFile = new ArchiveFile(deb))
                         {
-                            using (ArchiveFile archiveFile = new ArchiveFile(deb))
-                            {
-                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
-                            }
-                            var p = Process.Start(@"7z.exe", "e " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar." + (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                            p.WaitForExit();
-                            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-                            {
-                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
-                            }
+                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                         }
-                        catch (Exception e)
+                        var p = Process.Start(@"7z.exe", "e " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar." + (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                        p.WaitForExit();
+                        using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
                         {
-                            Console.WriteLine("Not a valid deb file / Write Access Denied");
-                            throw e;
-                        };
+                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
+                        }
+                        //}
+                        //catch (Exception e)
+                        //{
+                        //    Console.WriteLine("Not a valid deb file / Write Access Denied");
+                        //    throw e;
+                        //};
                     }
                     else if (deb.Contains(".ipa"))
                     {
@@ -340,8 +340,8 @@ namespace Unjailbreaker
             c.Remove("DS_STORE");
             string s = "";
             c.Files.ForEach(i =>
-                                   {
-                                       s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
+                                               {
+                                                   s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
                                    });
             File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
@@ -375,11 +375,11 @@ namespace Unjailbreaker
                             Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
                             string bin = dict["CFBundleExecutable"].ToString();
                             c.Files.ForEach(i =>
-                            {
-                                if (i.Contains("\\Applications\\"))
-                                {
-                                    uicache = true;
-                                    bool sign = false;
+                                                        {
+                                                            if (i.Contains("\\Applications\\"))
+                                                            {
+                                                                uicache = true;
+                                                                bool sign = false;
                                     //if (new FileInfo(i).Name == bin)
                                     //{
                                     //    i = convert_path(i);
@@ -399,21 +399,21 @@ namespace Unjailbreaker
                                     //}
                                     //else
                                     {
-                                        if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
-                                        if (!sign)
-                                        {
-                                            if (i.Split('.').Last() == "dylib") sign = true;
-                                        }
-                                        i = convert_path(i);
-                                        if (sign)
-                                        {
-                                            session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                            session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                            session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
-                                        }
-                                    }
-                                }
-                            });
+                                                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                                                    if (!sign)
+                                                                    {
+                                                                        if (i.Split('.').Last() == "dylib") sign = true;
+                                                                    }
+                                                                    i = convert_path(i);
+                                                                    if (sign)
+                                                                    {
+                                                                        session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                                                        session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                                                        session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
                         }
                     }
                     finish(session);
