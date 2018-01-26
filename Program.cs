@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Tweak_Installer;
 using WinSCP;
+using PlistCS;
 
 namespace Unjailbreaker
 {
@@ -371,23 +372,45 @@ namespace Unjailbreaker
                         foreach (var app in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\"))
                         {
                             Crawler crawler = new Crawler(app);
+                            Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
+                            string bin = dict["CFBundleExecutable"].ToString();
                             c.Files.ForEach(i =>
                             {
                                 if (i.Contains("\\Applications\\"))
                                 {
                                     uicache = true;
                                     bool sign = false;
-                                    if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
-                                    if (!sign)
+                                    //if (new FileInfo(i).Name == bin)
+                                    //{
+                                    //    i = convert_path(i);
+                                    //    session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                    //    session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                    //    session.ExecuteCommand("jtool --ent " + i + " > orig.ent");
+                                    //    session.GetFiles("orig.ent", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent");
+                                    //    string ent = File.ReadAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent").Replace("</dict>", "").Replace("</plist>", "");
+                                    //    string[] plat = File.ReadAllLines("plat.ent");
+                                    //    for (int j = 3; j != plat.Length; j++)
+                                    //    {
+                                    //        ent += plat[j];
+                                    //    }
+                                    //    File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", ent);
+                                    //    session.PutFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", "orig.ent");
+                                    //    session.ExecuteCommand("jtool --sign --ent orig.ent --inplace " + i);
+                                    //}
+                                    //else
                                     {
-                                        if (i.Split('.').Last() == "dylib") sign = true;
-                                    }
-                                    i = convert_path(i);
-                                    if (sign)
-                                    {
-                                        session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                        session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                        session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                        if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                        if (!sign)
+                                        {
+                                            if (i.Split('.').Last() == "dylib") sign = true;
+                                        }
+                                        i = convert_path(i);
+                                        if (sign)
+                                        {
+                                            session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                            session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                            session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                        }
                                     }
                                 }
                             });
