@@ -15,6 +15,3 @@ C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\ob
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\obj\Debug\Unjailbreaker.csproj.CoreCompileInputs.cache
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\obj\Debug\tic.exe
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\obj\Debug\tic.pdb
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\PlistCS.dll
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\C\Unjailbreaker\bin\Debug\PlistCS.pdb
