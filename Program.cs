@@ -203,24 +203,21 @@ namespace Unjailbreaker
                         try
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
-                        {
-                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
+                            {
+                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
+                            }
+                            var p = Process.Start(@"7z.exe", "e " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar." + (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                            p.WaitForExit();
+                            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                            {
+                                archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
+                            }
                         }
-                        var p = Process.Start(@"7z.exe", "e " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar." + (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                        p.WaitForExit();
-                        using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                        catch (Exception e)
                         {
-                            archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files");
-                        }
-                    }
-                        catch
-                    {
-                        Console.WriteLine("Not a valid deb file");
-                        Console.ReadLine();
-                        Environment.Exit(0);
-                    };
-                    emptyDir(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
-                        deleteIfExists("data.tar");
+                            Console.WriteLine("Not a valid deb file / Write Access Denied");
+                            throw e;
+                        };
                     }
                     else if (deb.Contains(".ipa"))
                     {
@@ -238,11 +235,10 @@ namespace Unjailbreaker
                                 Directory.Move(app, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\" + new DirectoryInfo(app).Name);
                             }
                         }
-                        catch
+                        catch (Exception e)
                         {
-                            Console.WriteLine("Not a valid IPA");
-                            Console.ReadLine();
-                            Environment.Exit(0);
+                            Console.WriteLine("Not a valid IPA / Write Access Denied");
+                            throw e;
                         }
                     }
                     else
@@ -256,11 +252,10 @@ namespace Unjailbreaker
                                 archiveFile.Extract(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp");
                             }
                         }
-                        catch
+                        catch (Exception e)
                         {
-                            Console.WriteLine("Not a valid ZIP archive");
-                            Console.ReadLine();
-                            Environment.Exit(0);
+                            Console.WriteLine("Not a valid ZIP archive / Write Access Denied");
+                            throw e;
                         }
                         if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "temp\\bootstrap\\"))
                         {
@@ -408,10 +403,6 @@ namespace Unjailbreaker
                     if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications"))
                     {
                         uicache = true;
-                        foreach (string app in Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\" + "files\\Applications\\"))
-                        {
-                            session.ExecuteCommand("rm -rf /Applications/" + new DirectoryInfo(app).Name);
-                        }
                     }
                     Console.WriteLine("Locating and removing *some* empty folders");
                     session.ExecuteCommand("find /System/Library/Themes/ -type d -empty -delete");
