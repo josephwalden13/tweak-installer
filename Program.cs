@@ -75,11 +75,13 @@ namespace Unjailbreaker
         static void Main(string[] args)
         {
             List<string> skip = File.Exists("skip.list") ? File.ReadAllLines("skip.list").ToList() : new List<string>();
+
             if (!File.Exists("settings"))
             {
-                string[] def = new string[3];
+                string[] def = new string[] { "192.168.1.1", "22", "" };
                 File.WriteAllLines("settings", def);
             }
+
             if (args.Contains("convert")) convert = true;
             if (args.Contains("uninstall")) uninstall = true;
             if (args.Contains("install")) install = true;
@@ -116,6 +118,7 @@ namespace Unjailbreaker
                 data[i] = data[i].Split('#')[0];
             }
             string ip = data[0];
+            string port = data[1];
             string user = "root"; //data[1];
             string password = data[2];
 
@@ -126,6 +129,7 @@ namespace Unjailbreaker
                 HostName = ip,
                 UserName = user,
                 Password = password,
+                PortNumber = int.Parse(port),
                 GiveUpSecurityAndAcceptAnySshHostKey = true
             };
             Session session = new Session();
@@ -135,7 +139,7 @@ namespace Unjailbreaker
             }
             catch (SessionRemoteException e)
             {
-                if (e.ToString().Contains("refused")) Console.WriteLine("Error: SSH Connection Refused\nAre you jailbroken?\nHave you entered your devices IP correctly?");
+                if (e.ToString().Contains("refused")) Console.WriteLine("Error: SSH Connection Refused\nAre you jailbroken?\nHave you entered your devices IP and port correctly?");
                 else if (e.ToString().Contains("Access denied")) Console.WriteLine("Error: SSH Connection Refused due to incorrect credentials. Are you sure you typed your password correctly?");
                 else if (e.ToString().Contains("Cannot initialize SFTP protocol")) Console.WriteLine("Error: SFTP not available. Make sure you have sftp installed by default. For Yalu or Meridian, please install \"SCP and SFTP for dropbear\" by coolstar. For LibreIOS, make sure SFTP is moved to /usr/bin/.");
                 else
@@ -429,7 +433,7 @@ namespace Unjailbreaker
                         bool go = false, action = false;
                         if (session.FileExists(convert_path(i)) && !overwrite)
                         {
-                            Console.WriteLine("Do you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
+                            Console.WriteLine("\nDo you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
                             while (true)
                             {
                                 switch (Console.ReadKey().Key)
