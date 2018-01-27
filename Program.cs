@@ -21,7 +21,7 @@ namespace Unjailbreaker
 {
     class Program
     {
-        static bool install = false, uninstall = false, convert = false, manual = false, jtool = false, update = true, uicache = false, respring_override = false, uicache_override = false, onlyPerformSSHActions = false;
+        static bool install = false, uninstall = false, convert = false, manual = false, jtool = false, update = true, uicache = false, respring_override = false, uicache_override = false, onlyPerformSSHActions = false, verbose = false;
         static string convert_path(string i, bool unix = false)
         {
             if (!unix)
@@ -46,29 +46,54 @@ namespace Unjailbreaker
                 session.ExecuteCommand("killall -9 SpringBoard"); //respring
             }
             session.Close();
+            if (verbose) Console.WriteLine("Press any key to finish");
+            if (verbose) Console.ReadLine();
         }
         static void createDirIfDoesntExist(string path)
         {
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            if (!Directory.Exists(path))
+            {
+                if (verbose) Console.WriteLine("Creating directory " + path);
+                Directory.CreateDirectory(path);
+                if (verbose) Console.WriteLine("Created directory " + path);
+            }
+            else
+            {
+                if (verbose) Console.WriteLine("\b\b\b\bNo need to create " + path + " as it already exists");
+            }
         }
         static void deleteIfExists(string path)
         {
-            if (File.Exists(path)) File.Delete(path);
+            if (verbose) Console.WriteLine("Searching for " + path);
+            if (File.Exists(path))
+            {
+                if (verbose) Console.WriteLine("Deleting " + path);
+                File.Delete(path);
+                if (verbose) Console.WriteLine("Deleted " + path);
+            }
         }
         static void emptyDir(string path)
         {
-            if (Directory.Exists(path)) Directory.Delete(path, true);
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+                if (verbose) Console.WriteLine("Deleted " + path);
+            }
             Directory.CreateDirectory(path);
+            if (verbose) Console.WriteLine("Created directory " + path);
         }
         static void moveDirIfPresent(string source, string dest, string parent = null)
         {
             if (Directory.Exists(source))
             {
+                if (verbose) Console.WriteLine("Found " + source);
                 if (parent != null)
                 {
-                    Directory.CreateDirectory(parent);
+                    createDirIfDoesntExist(parent);
+                    if (verbose) Console.WriteLine("Created " + parent);
                 }
                 FileSystem.MoveDirectory(source, dest, true);
+                if (verbose) Console.WriteLine("Moved " + source + " to " + dest);
             }
         }
         [STAThread]
@@ -90,11 +115,13 @@ namespace Unjailbreaker
             if (args.Contains("dont-refresh")) uicache_override = true;
             if (args.Contains("dont-respring")) respring_override = true;
             if (args.Contains("no-install")) onlyPerformSSHActions = true;
+            if (args.Contains("verbose") || File.Exists("verbose")) verbose = true;
 
             createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\");
 
             if (update)
             {
+                if (verbose) Console.WriteLine("Checking for updates");
                 //check for updates
                 try
                 {
@@ -109,7 +136,10 @@ namespace Unjailbreaker
                         }
                     }
                 }
-                catch { }
+                catch
+                {
+                    if (verbose) Console.WriteLine("Update check failed");
+                }
             }
 
             string[] data = File.ReadAllLines("settings"); //get ssh settings
@@ -117,6 +147,7 @@ namespace Unjailbreaker
             {
                 data[i] = data[i].Split('#')[0];
             }
+            if (verbose) Console.WriteLine("Read settings");
             string ip = data[0];
             string port = data[1];
             string user = "root"; //data[1];
@@ -152,9 +183,11 @@ namespace Unjailbreaker
                 Console.ReadLine();
                 Environment.Exit(0);
             }
+            Console.WriteLine("Connected to SSH");
 
             if (onlyPerformSSHActions)
             {
+                if (verbose) Console.WriteLine("Only executing SSH commands. Not touching file system");
                 uicache = true;
                 finish(session);
                 return;
@@ -162,6 +195,7 @@ namespace Unjailbreaker
 
             if (session.FileExists("/usr/lib/SBInject"))
             {
+                if (verbose) Console.WriteLine("You're running Electa. I'll convert tweaks to that format & add entitlements to applications");
                 convert = true;
                 if (!session.FileExists("/bootstrap/Library/Themes"))
                 {
@@ -173,13 +207,14 @@ namespace Unjailbreaker
             }
             if (session.FileExists("/jb/"))
             {
+                if (verbose) Console.WriteLine("You're running LibreiOS. I'll add entitlements to applications");
                 jtool = true;
             }
 
             if (manual)
             {
                 createDirIfDoesntExist("files");
-                Console.WriteLine("Please move rootfs file into 'files' and press enter to continue");
+                Console.WriteLine("Manual mode. Please move rootfs file into 'files' and press enter to continue");
                 Console.ReadLine();
             }
             else
@@ -192,14 +227,17 @@ namespace Unjailbreaker
                 {
                     if (i.Contains(".deb"))
                     {
+                        if (verbose) Console.WriteLine("Found deb: " + i);
                         debs.Add(i);
                     }
                     if (i.Contains(".ipa"))
                     {
+                        if (verbose) Console.WriteLine("Found ipa: " + i);
                         debs.Add(i);
                     }
                     if (i.Contains(".zip"))
                     {
+                        if (verbose) Console.WriteLine("Found zip: " + i);
                         debs.Add(i);
                     }
                 }
@@ -214,13 +252,20 @@ namespace Unjailbreaker
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
                             {
+                                if (verbose) Console.WriteLine("Extracting data.tar.lzma || data.tar.gz");
                                 archiveFile.Extract("temp");
+                                if (verbose) Console.WriteLine("Extracted");
                             }
+                            if (verbose) Console.WriteLine("Extracting data.tar");
                             var p = Process.Start(@"7z.exe", "e " + "temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                            if (verbose) Console.WriteLine("Waiting for subprocess to complete");
                             p.WaitForExit();
+                            if (verbose) Console.WriteLine("Successfully extracted data.tar");
                             using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
                             {
+                                if (verbose) Console.WriteLine("Extracting deb files");
                                 archiveFile.Extract("files");
+                                if (verbose) Console.WriteLine("Extracted");
                             }
                         }
                         catch (Exception e)
@@ -237,12 +282,15 @@ namespace Unjailbreaker
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
                             {
+                                if (verbose) Console.WriteLine("Extracting payload");
                                 archiveFile.Extract("temp");
                             }
                             createDirIfDoesntExist("files\\Applications");
                             foreach (string app in Directory.GetDirectories("temp\\Payload\\"))
                             {
+                                if (verbose) Console.WriteLine("Moving payload");
                                 Directory.Move(app, "files\\Applications\\" + new DirectoryInfo(app).Name);
+                                if (verbose) Console.WriteLine("Moved payload");
                             }
                         }
                         catch (Exception e)
@@ -259,7 +307,9 @@ namespace Unjailbreaker
                         {
                             using (ArchiveFile archiveFile = new ArchiveFile(deb))
                             {
+                                if (verbose) Console.WriteLine("Extracting zip");
                                 archiveFile.Extract("temp");
+                                if (verbose) Console.WriteLine("Extracted zip");
                             }
                         }
                         catch (Exception e)
@@ -351,52 +401,64 @@ namespace Unjailbreaker
                 createDirIfDoesntExist("files\\bootstrap\\Library");
                 if (Directory.Exists("files\\Library\\MobileSubstrate\\"))
                 {
+                    if (verbose) Console.WriteLine("Found MobileSubstrate");
                     createDirIfDoesntExist("files\\usr\\lib\\SBInject");
                     foreach (string file in Directory.GetFiles("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
+                        if (verbose) Console.WriteLine("Moving Substrate file to SBInject");
                         File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
                     }
                     foreach (string file in Directory.GetDirectories("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
+                        if (verbose) Console.WriteLine("Moving Substrate dirs to SBInject");
                         Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
                     }
                     Directory.Delete("files\\Library\\MobileSubstrate", true);
+                    if (verbose) Console.WriteLine("Deleted MobileSubstrate folder");
                 }
                 moveDirIfPresent("files\\Library\\Themes\\", "files\\bootstrap\\Library\\Themes\\");
                 moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
                 moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
             }
+
+            if (verbose) Console.WriteLine("Getting all files");
             Crawler c = new Crawler("files", true); //gets all files in the tweak
             c.Remove("DS_STORE");
             string s = "";
+            if (verbose) Console.WriteLine("Got files. Generating script");
             c.Files.ForEach(i =>
                                                {
                                                    s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
                                                });
+            if (verbose) Console.WriteLine("Done");
             //File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
                 if (install)
                 {
+                    if (verbose) Console.WriteLine("Now we start to write to the device");
                     Console.WriteLine("Preparing to install");
                     if (session.FileExists("/plat.ent"))
                     {
                         session.RemoveFiles("/plat.ent");
+                        if (verbose) Console.WriteLine("Removed old entitlements file from the device");
                     }
                     createDirIfDoesntExist("backup");
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
                         File.Copy("plat.ent", "files\\plat.ent", true);
+                        if (verbose) Console.WriteLine("Entitlements needed. Copying entitlements file");
                     }
                     if (Directory.Exists("files\\Applications\\electra.app"))
                     {
+                        if (verbose) Console.WriteLine("please no");
                         var f = MessageBox.Show("Please do not try this");
                         Environment.Exit(0);
                     }
                     bool overwrite = false;
-                    c = new Crawler("files", true); //gets all files in the tweak
-                    c.Remove("DS_STORE");
+                    if (verbose) Console.WriteLine("Creating directory list");
                     string[] directories = Directory.GetDirectories("files", "*", searchOption: System.IO.SearchOption.AllDirectories);
+                    if (verbose) Console.WriteLine("Got list. Creating remote environment");
                     foreach (string dir in directories)
                     {
                         if (!session.FileExists(convert_path(dir.Replace("files", ""))))
@@ -409,11 +471,13 @@ namespace Unjailbreaker
                                 if (session.FileExists(pathstr)) continue;
                                 //Console.WriteLine("Creating " + pathstr);
                                 session.CreateDirectory(pathstr);
+                                if (verbose) Console.WriteLine("Created " + pathstr);
                             }
                         }
                     }
                     long size = 0;
                     long done = 0;
+                    if (verbose) Console.WriteLine("Calculating size of files to install");
                     foreach (string file in Directory.GetFiles("files", "*", System.IO.SearchOption.AllDirectories))
                     {
                         size += new FileInfo(file).Length;
@@ -433,7 +497,8 @@ namespace Unjailbreaker
                         bool go = false, action = false;
                         if (session.FileExists(convert_path(i)) && !overwrite)
                         {
-                            Console.WriteLine("\nDo you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
+                            if (verbose) Console.WriteLine("\b\b\b\bFile already exists");
+                            Console.WriteLine("\b\b\b\bDo you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
                             while (true)
                             {
                                 switch (Console.ReadKey().Key)
@@ -462,6 +527,7 @@ namespace Unjailbreaker
                         }
                         if (!action)
                         {
+                            if (verbose) Console.WriteLine("\b\b\b\bSkipping file " + i);
                             if (!skip.Contains(i))
                             {
                                 skip.Add(i);
@@ -477,15 +543,18 @@ namespace Unjailbreaker
                             //Console.WriteLine("Uploading " + convert_path(i));
                             //Console.WriteLine("File exists? " + File.Exists("files\\" + i));
                             session.PutFiles("files\\" + i, convert_path(i));
+                            if (verbose) Console.WriteLine("\b\b\b\bInstalled file " + i);
                         }
                     });
                     Console.Write("\b\b\b\b    \b\b\b\bDone\n");
                     File.WriteAllLines("skip.list", skip);
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
+                        if (verbose) Console.WriteLine("Entitlements needed");
                         Console.WriteLine("Signing applications");
                         foreach (var app in Directory.GetDirectories("files\\Applications\\"))
                         {
+                            if (verbose) Console.WriteLine("Signing " + app);
                             //Crawler crawler = new Crawler(app);
                             //Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
                             //string bin = dict["CFBundleExecutable"].ToString();
@@ -525,6 +594,7 @@ namespace Unjailbreaker
                                             session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
                                             session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
                                             session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
+                                            if (verbose) Console.WriteLine("Signed " + i);
                                         }
                                     }
                                 }
@@ -537,8 +607,6 @@ namespace Unjailbreaker
                 {
                     Console.WriteLine("Uninstalling");
                     bool overwrite = false;
-                    c = new Crawler("files", true); //gets all files in the tweak
-                    c.Remove("DS_STORE");
                     c.Files.ForEach(i =>
                     {
                         if (!skip.Contains(i))
@@ -547,6 +615,7 @@ namespace Unjailbreaker
                             bool go = false, action = false;
                             if (File.Exists("backup\\" + convert_path(i)) && !overwrite)
                             {
+                                if (verbose) Console.WriteLine("You have a backup of this file");
                                 Console.WriteLine("Do you want to restore " + convert_path(i) + " from your backup? (y/n/a)");
                                 while (true)
                                 {
@@ -570,15 +639,18 @@ namespace Unjailbreaker
                                 }
                             }
                             session.ExecuteCommand("rm " + convert_path(i, true));
+                            if (verbose) Console.WriteLine("Uninstalled " + i);
                             if (action || overwrite)
                             {
                                 string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
                                 session.PutFiles(new FileInfo("backup" + convert_path(i)).ToString().Replace("/", "\\"), convert_path(path) + "/" + new FileInfo(i).Name);
+                                if (verbose) Console.WriteLine("Reinstalled " + i);
                             }
                         }
                     });
                     if (Directory.Exists("files\\Applications"))
                     {
+                        if (verbose) Console.WriteLine("uicache refresh required");
                         uicache = true;
                     }
                     Console.WriteLine("Locating and removing *some* empty folders");
@@ -588,6 +660,7 @@ namespace Unjailbreaker
                     session.ExecuteCommand("find /Library/ -type d -empty -delete");
                     session.ExecuteCommand("find /bootstrap/Library/Themes/ -type d -empty -delete");
                     session.ExecuteCommand("find /bootstrap/Library/SBInject/ -type d -empty -delete");
+                    if (verbose) Console.WriteLine("Done");
                     finish(session);
                 }
             }
