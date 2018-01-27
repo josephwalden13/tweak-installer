@@ -293,26 +293,48 @@ namespace Unjailbreaker
                         {
                             Console.WriteLine("Unrecognised format. Determining ability to install");
                             List<string> exts = new List<string>();
-                            foreach (string i in Directory.GetFiles("temp"))
+                            List<string> directories = new List<string>();
+                            foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
                             {
-                                string ext = new FileInfo(i).Extension;
-                                if (!exts.Contains(ext)) exts.Add(ext);
+                                directories.Add(new DirectoryInfo(dir).Name);
                             }
-                            if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
+                            if (directories.Contains("bootstrap"))
                             {
-                                Console.WriteLine("Substrate Addon. Installing");
-                                createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                                foreach (string i in Directory.GetFiles("temp"))
+                                Console.WriteLine("Found bootstrap");
+                                foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
                                 {
-                                    File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                    if (new DirectoryInfo(dir).Name == "bootstrap")
+                                    {
+                                        createDirIfDoesntExist("files\\bootstrap\\");
+                                        FileSystem.CopyDirectory(dir, "files\\bootstrap");
+                                        moveDirIfPresent("files\\bootstrap\\SBInject", "files\\bootstrap\\Library\\SBInject", "files\\bootstrap\\Library\\SBInject");
+                                        break;
+                                    }
                                 }
-                                moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
-                                moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
                             }
                             else
                             {
-                                Console.WriteLine("Unsafe to install. To install this tweak you must do so manually. Press enter to continue...");
-                                Console.ReadLine();
+                                foreach (string i in Directory.GetFiles("temp"))
+                                {
+                                    string ext = new FileInfo(i).Extension;
+                                    if (!exts.Contains(ext)) exts.Add(ext);
+                                }
+                                if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
+                                {
+                                    Console.WriteLine("Substrate Addon. Installing");
+                                    createDirIfDoesntExist("files\\usr\\lib\\SBInject");
+                                    foreach (string i in Directory.GetFiles("temp"))
+                                    {
+                                        File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                    }
+                                    moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
+                                    moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unsafe to install. To install this tweak you must do so manually. Press enter to continue...");
+                                    Console.ReadLine();
+                                }
                             }
                         }
                     }
@@ -366,6 +388,7 @@ namespace Unjailbreaker
                     }
                     bool overwrite = false;
                     c = new Crawler("files", true); //gets all files in the tweak
+                    c.Remove("DS_STORE");
                     string[] directories = Directory.GetDirectories("files", "*", searchOption: System.IO.SearchOption.AllDirectories);
                     foreach (string dir in directories)
                     {
@@ -491,6 +514,7 @@ namespace Unjailbreaker
                     Console.WriteLine("Uninstalling");
                     bool overwrite = false;
                     c = new Crawler("files", true); //gets all files in the tweak
+                    c.Remove("DS_STORE");
                     c.Files.ForEach(i =>
                     {
                         if (!skip.Contains(i))
