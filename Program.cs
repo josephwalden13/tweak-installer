@@ -22,9 +22,16 @@ namespace Unjailbreaker
     class Program
     {
         static bool install = false, uninstall = false, convert = false, manual = false, jtool = false, update = true, uicache = false, respring_override = false, uicache_override = false, onlyPerformSSHActions = false;
-        static string convert_path(string i)
+        static string convert_path(string i, bool unix = false)
         {
-            return i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
+            if (!unix)
+            {
+                return i.Replace("\\", "/");//.Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
+            }
+            else
+            {
+                return i.Replace("\\", "/").Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
+            }
         }
         static void finish(Session session)
         {
@@ -67,6 +74,7 @@ namespace Unjailbreaker
         [STAThread]
         static void Main(string[] args)
         {
+            List<string> skip = File.Exists("skip.list") ? File.ReadAllLines("skip.list").ToList() : new List<string>();
             if (!File.Exists("settings"))
             {
                 string[] def = new string[3];
@@ -151,11 +159,11 @@ namespace Unjailbreaker
             if (session.FileExists("/usr/lib/SBInject"))
             {
                 convert = true;
-                if (!session.FileExists("/System/Library/Themes"))
+                if (!session.FileExists("/bootstrap/Library/Themes"))
                 {
-                    session.CreateDirectory("/System/Library/Themes");
-                    session.ExecuteCommand("touch /System/Library/Themes/dont-delete");
-                    Console.WriteLine("Themes folder missing. Touching /System/Library/Themes/dont-delete to prevent this in future");
+                    session.CreateDirectory("/bootstrap/Library/Themes");
+                    session.ExecuteCommand("touch /bootstrap/Library/Themes/dont-delete");
+                    Console.WriteLine("Themes folder missing. Touching /bootstrap/Library/Themes/dont-delete to prevent this in future");
                 }
                 jtool = true;
             }
@@ -271,7 +279,7 @@ namespace Unjailbreaker
                                 }
                                 Directory.Delete("temp\\bootstrap\\Library\\SBInject", true);
                             }
-                            moveDirIfPresent("temp\\bootstrap\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
+                            moveDirIfPresent("temp\\bootstrap\\Library\\Themes\\", "files\\bootstrap\\Library\\Themes\\");
                             foreach (string dir in Directory.GetDirectories("temp"))
                             {
                                 FileSystem.MoveDirectory(dir, "files\\" + new DirectoryInfo(dir).Name, true);
@@ -310,7 +318,6 @@ namespace Unjailbreaker
                     }
                 }
             }
-            string name = "script";
             if (convert) //convert to electra format
             {
                 Console.WriteLine("Converting to electra tweak format");
@@ -329,7 +336,7 @@ namespace Unjailbreaker
                     }
                     Directory.Delete("files\\Library\\MobileSubstrate", true);
                 }
-                moveDirIfPresent("files\\Library\\Themes\\", "files\\System\\Library\\Themes\\", "files\\System\\Library\\");
+                moveDirIfPresent("files\\Library\\Themes\\", "files\\bootstrap\\Library\\Themes\\");
                 moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
                 moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
             }
@@ -340,11 +347,12 @@ namespace Unjailbreaker
                                                {
                                                    s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
                                                });
-            File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
+            //File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
                 if (install)
                 {
+                    session.RemoveFiles("/plat.ent");
                     createDirIfDoesntExist("backup");
                     Console.WriteLine("Installing");
                     if (Directory.Exists("files\\Applications") && jtool)
@@ -357,6 +365,23 @@ namespace Unjailbreaker
                         Environment.Exit(0);
                     }
                     bool overwrite = false;
+                    c = new Crawler("files", true); //gets all files in the tweak
+                    string[] directories = Directory.GetDirectories("files", "*", searchOption: System.IO.SearchOption.AllDirectories);
+                    foreach (string dir in directories)
+                    {
+                        if (!session.FileExists(convert_path(dir.Replace("files", ""))))
+                        {
+                            //crappy method - will change
+                            string pathstr = "/";
+                            foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
+                            {
+                                pathstr += sub + '/';
+                                if (session.FileExists(pathstr)) continue;
+                                //Console.WriteLine("Creating " + pathstr);
+                                session.CreateDirectory(pathstr);
+                            }
+                        }
+                    }
                     c.Files.ForEach(i =>
                     {
                         bool go = false, action = false;
@@ -385,22 +410,30 @@ namespace Unjailbreaker
                                 if (go) break;
                             }
                         }
+                        else
+                        {
+                            action = true;
+                        }
+                        if (!action)
+                        {
+                            if (!skip.Contains(i))
+                            {
+                                skip.Add(i);
+                            }
+                        }
+                        string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
+                        //Console.WriteLine("Backing up " + path);
+                        createDirIfDoesntExist("backup\\" + path);
+                        session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
                         if (action || overwrite)
                         {
-                            string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
-                            createDirIfDoesntExist("backup\\" + path);
-                            session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
-                            session.PutFiles(i, convert_path(path));
+                            if (skip.Contains(i)) skip.Remove(i);
+                            //Console.WriteLine("Uploading " + convert_path(i));
+                            //Console.WriteLine("File exists? " + File.Exists("files\\" + i));
+                            session.PutFiles("files\\" + i, convert_path(i));
                         }
                     });
-                    //foreach (string dir in Directory.GetDirectories("files"))
-                    //{
-                    //    session.PutFiles(dir, "/"); //put directories
-                    //}
-                    //foreach (string file in Directory.GetFiles("files"))
-                    //{
-                    //    session.PutFiles(file, "/"); //put files
-                    //}
+                    File.WriteAllLines("skip.list", skip);
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
                         Console.WriteLine("Signing applications");
@@ -457,39 +490,43 @@ namespace Unjailbreaker
                 {
                     Console.WriteLine("Uninstalling");
                     bool overwrite = false;
+                    c = new Crawler("files", true); //gets all files in the tweak
                     c.Files.ForEach(i =>
                     {
-                        //Console.WriteLine(convert_path(i));
-                        bool go = false, action = false;
-                        if (File.Exists("backup\\" + convert_path(i)) && !overwrite)
+                        if (!skip.Contains(i))
                         {
-                            Console.WriteLine("Do you want to restore " + convert_path(i) + " from your backup? (y/n/a)");
-                            while (true)
+                            //Console.WriteLine(convert_path(i));
+                            bool go = false, action = false;
+                            if (File.Exists("backup\\" + convert_path(i)) && !overwrite)
                             {
-                                switch (Console.ReadKey().Key)
+                                Console.WriteLine("Do you want to restore " + convert_path(i) + " from your backup? (y/n/a)");
+                                while (true)
                                 {
-                                    case ConsoleKey.Y:
-                                        go = true;
-                                        action = true;
-                                        break;
-                                    case ConsoleKey.A:
-                                        go = true;
-                                        action = true;
-                                        overwrite = true;
-                                        break;
-                                    case ConsoleKey.N:
-                                        go = true;
-                                        break;
+                                    switch (Console.ReadKey().Key)
+                                    {
+                                        case ConsoleKey.Y:
+                                            go = true;
+                                            action = true;
+                                            break;
+                                        case ConsoleKey.A:
+                                            go = true;
+                                            action = true;
+                                            overwrite = true;
+                                            break;
+                                        case ConsoleKey.N:
+                                            go = true;
+                                            break;
+                                    }
+                                    Console.WriteLine();
+                                    if (go) break;
                                 }
-                                Console.WriteLine();
-                                if (go) break;
                             }
-                        }
-                        session.ExecuteCommand("rm " + convert_path(i));
-                        if (action || overwrite)
-                        {
-                            string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
-                            session.PutFiles(new FileInfo("backup" + convert_path(i)).ToString().Replace("/", "\\"), convert_path(path) + "/" + new FileInfo(i).Name);
+                            session.ExecuteCommand("rm " + convert_path(i, true));
+                            if (action || overwrite)
+                            {
+                                string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
+                                session.PutFiles(new FileInfo("backup" + convert_path(i)).ToString().Replace("/", "\\"), convert_path(path) + "/" + new FileInfo(i).Name);
+                            }
                         }
                     });
                     if (Directory.Exists("files\\Applications"))
@@ -501,7 +538,8 @@ namespace Unjailbreaker
                     session.ExecuteCommand("find /usr/ -type d -empty -delete");
                     session.ExecuteCommand("find /Applications/ -type d -empty -delete");
                     session.ExecuteCommand("find /Library/ -type d -empty -delete");
-                    session.ExecuteCommand("find /bootstrap/ -type d -empty -delete");
+                    session.ExecuteCommand("find /bootstrap/Library/Themes/ -type d -empty -delete");
+                    session.ExecuteCommand("find /bootstrap/Library/SBInject/ -type d -empty -delete");
                     finish(session);
                 }
             }
