@@ -39,7 +39,6 @@ namespace Unjailbreaker
                 session.ExecuteCommand("killall -9 SpringBoard"); //respring
             }
             session.Close();
-            //Console.ReadLine();
         }
         static void createDirIfDoesntExist(string path)
         {
@@ -62,9 +61,10 @@ namespace Unjailbreaker
                 {
                     Directory.CreateDirectory(parent);
                 }
-                Directory.Move(source, dest);
+                FileSystem.MoveDirectory(source, dest, true);
             }
         }
+        [STAThread]
         static void Main(string[] args)
         {
             if (!File.Exists("settings"))
@@ -196,6 +196,7 @@ namespace Unjailbreaker
                     if (deb.Contains(".deb"))
                     {
                         emptyDir("temp");
+                        deleteIfExists("data.tar");
                         Console.WriteLine("Extracting " + deb);
                         try
                         {
@@ -344,6 +345,7 @@ namespace Unjailbreaker
             {
                 if (install)
                 {
+                    createDirIfDoesntExist("backup");
                     Console.WriteLine("Installing");
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
@@ -354,14 +356,51 @@ namespace Unjailbreaker
                         var f = MessageBox.Show("Please do not try this");
                         Environment.Exit(0);
                     }
-                    foreach (string dir in Directory.GetDirectories("files"))
+                    bool overwrite = false;
+                    c.Files.ForEach(i =>
                     {
-                        session.PutFiles(dir, "/"); //put directories
-                    }
-                    foreach (string file in Directory.GetFiles("files"))
-                    {
-                        session.PutFiles(file, "/"); //put files
-                    }
+                        bool go = false, action = false;
+                        if (session.FileExists(convert_path(i)) && !overwrite)
+                        {
+                            Console.WriteLine("Do you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
+                            while (true)
+                            {
+                                switch (Console.ReadKey().Key)
+                                {
+                                    case ConsoleKey.Y:
+                                        go = true;
+                                        action = true;
+                                        break;
+                                    case ConsoleKey.A:
+                                        go = true;
+                                        action = true;
+                                        overwrite = true;
+                                        break;
+                                    case ConsoleKey.N:
+                                        action = false;
+                                        go = true;
+                                        break;
+                                }
+                                Console.WriteLine();
+                                if (go) break;
+                            }
+                        }
+                        if (action || overwrite)
+                        {
+                            string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
+                            createDirIfDoesntExist("backup\\" + path);
+                            session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
+                            session.PutFiles(i, convert_path(path));
+                        }
+                    });
+                    //foreach (string dir in Directory.GetDirectories("files"))
+                    //{
+                    //    session.PutFiles(dir, "/"); //put directories
+                    //}
+                    //foreach (string file in Directory.GetFiles("files"))
+                    //{
+                    //    session.PutFiles(file, "/"); //put files
+                    //}
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
                         Console.WriteLine("Signing applications");
@@ -417,8 +456,42 @@ namespace Unjailbreaker
                 else if (uninstall)
                 {
                     Console.WriteLine("Uninstalling");
-                    session.PutFiles("files\\script.sh", "/");
-                    session.ExecuteCommand("sh /script.sh");
+                    bool overwrite = false;
+                    c.Files.ForEach(i =>
+                    {
+                        //Console.WriteLine(convert_path(i));
+                        bool go = false, action = false;
+                        if (File.Exists("backup\\" + convert_path(i)) && !overwrite)
+                        {
+                            Console.WriteLine("Do you want to restore " + convert_path(i) + " from your backup? (y/n/a)");
+                            while (true)
+                            {
+                                switch (Console.ReadKey().Key)
+                                {
+                                    case ConsoleKey.Y:
+                                        go = true;
+                                        action = true;
+                                        break;
+                                    case ConsoleKey.A:
+                                        go = true;
+                                        action = true;
+                                        overwrite = true;
+                                        break;
+                                    case ConsoleKey.N:
+                                        go = true;
+                                        break;
+                                }
+                                Console.WriteLine();
+                                if (go) break;
+                            }
+                        }
+                        session.ExecuteCommand("rm " + convert_path(i));
+                        if (action || overwrite)
+                        {
+                            string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
+                            session.PutFiles(new FileInfo("backup" + convert_path(i)).ToString().Replace("/", "\\"), convert_path(path) + "/" + new FileInfo(i).Name);
+                        }
+                    });
                     if (Directory.Exists("files\\Applications"))
                     {
                         uicache = true;
