@@ -117,8 +117,6 @@ namespace Unjailbreaker
             if (args.Contains("no-install")) onlyPerformSSHActions = true;
             if (args.Contains("verbose") || File.Exists("verbose")) verbose = true;
 
-            createDirIfDoesntExist(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\");
-
             if (update)
             {
                 if (verbose) Console.WriteLine("Checking for updates");
@@ -461,17 +459,24 @@ namespace Unjailbreaker
                     if (verbose) Console.WriteLine("Got list. Creating remote environment");
                     foreach (string dir in directories)
                     {
-                        if (!session.FileExists(convert_path(dir.Replace("files", ""))))
+                        if (!session.FileExists(convert_path(dir.Replace("files", ""))) || !Directory.Exists("backup\\" + dir.Replace("files", "")))
                         {
                             //crappy method - will change
                             string pathstr = "/";
                             foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
                             {
                                 pathstr += sub + '/';
-                                if (session.FileExists(pathstr)) continue;
-                                //Console.WriteLine("Creating " + pathstr);
-                                session.CreateDirectory(pathstr);
-                                if (verbose) Console.WriteLine("Created " + pathstr);
+                                if (!session.FileExists(pathstr))
+                                {
+                                    session.CreateDirectory(pathstr);
+                                    createDirIfDoesntExist("backup\\" + pathstr);
+                                    if (verbose) Console.WriteLine("Created " + pathstr);
+                                }
+                                if (!Directory.Exists("backup\\" + pathstr))
+                                {
+                                    createDirIfDoesntExist("backup" + pathstr);
+                                    if (verbose) Console.WriteLine("Created " + pathstr);
+                                }
                             }
                         }
                     }
@@ -534,14 +539,10 @@ namespace Unjailbreaker
                             }
                         }
                         string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
-                        //Console.WriteLine("Backing up " + path);
-                        createDirIfDoesntExist("backup\\" + path);
                         session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
                         if (action || overwrite)
                         {
                             if (skip.Contains(i)) skip.Remove(i);
-                            //Console.WriteLine("Uploading " + convert_path(i));
-                            //Console.WriteLine("File exists? " + File.Exists("files\\" + i));
                             session.PutFiles("files\\" + i, convert_path(i));
                             if (verbose) Console.WriteLine("\b\b\b\bInstalled file " + i);
                         }
@@ -659,6 +660,8 @@ namespace Unjailbreaker
                     session.ExecuteCommand("find /Applications/ -type d -empty -delete");
                     session.ExecuteCommand("find /Library/ -type d -empty -delete");
                     session.ExecuteCommand("find /bootstrap/Library/Themes/ -type d -empty -delete");
+                    session.ExecuteCommand("find /bootstrap/Library/PreferenceLoader/ -type d -empty -delete");
+                    session.ExecuteCommand("find /bootstrap/Library/PreferenceBundles/ -type d -empty -delete");
                     session.ExecuteCommand("find /bootstrap/Library/SBInject/ -type d -empty -delete");
                     if (verbose) Console.WriteLine("Done");
                     finish(session);
