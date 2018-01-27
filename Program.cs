@@ -374,9 +374,12 @@ namespace Unjailbreaker
             {
                 if (install)
                 {
-                    session.RemoveFiles("/plat.ent");
+                    Console.WriteLine("Preparing to install");
+                    if (session.FileExists("/plat.ent"))
+                    {
+                        session.RemoveFiles("/plat.ent");
+                    }
                     createDirIfDoesntExist("backup");
-                    Console.WriteLine("Installing");
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
                         File.Copy("plat.ent", "files\\plat.ent", true);
@@ -405,8 +408,24 @@ namespace Unjailbreaker
                             }
                         }
                     }
+                    long size = 0;
+                    long done = 0;
+                    foreach (string file in Directory.GetFiles("files", "*", System.IO.SearchOption.AllDirectories))
+                    {
+                        size += new FileInfo(file).Length;
+                    }
+                    int percentage = -1;
+                    Console.WriteLine("Installing");
+                    Console.Write("0%");
                     c.Files.ForEach(i =>
                     {
+                        done += new FileInfo("files\\" + i).Length;
+                        if (Math.Floor((done * 100) / (double)size) != percentage)
+                        {
+                            percentage = (int)Math.Floor((done * 100) / (double)size);
+                            Console.Write("\b\b\b   \b\b\b");
+                            Console.Write(percentage + "%");
+                        }
                         bool go = false, action = false;
                         if (session.FileExists(convert_path(i)) && !overwrite)
                         {
@@ -456,6 +475,7 @@ namespace Unjailbreaker
                             session.PutFiles("files\\" + i, convert_path(i));
                         }
                     });
+                    Console.Write("\b\b\b\b    \b\b\b\bDone\n");
                     File.WriteAllLines("skip.list", skip);
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
