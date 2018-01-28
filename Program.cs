@@ -468,14 +468,16 @@ namespace Unjailbreaker
                                 pathstr += sub + '/';
                                 if (!session.FileExists(pathstr))
                                 {
+                                    if (verbose) Console.WriteLine("Creating Remote " + pathstr);
                                     session.CreateDirectory(pathstr);
                                     createDirIfDoesntExist("backup\\" + pathstr);
-                                    if (verbose) Console.WriteLine("Created " + pathstr);
+                                    if (verbose) Console.WriteLine("Created Remote " + pathstr);
                                 }
                                 if (!Directory.Exists("backup\\" + pathstr))
                                 {
+                                    if (verbose) Console.WriteLine("Creating Local " + pathstr);
                                     createDirIfDoesntExist("backup" + pathstr);
-                                    if (verbose) Console.WriteLine("Created " + pathstr);
+                                    if (verbose) Console.WriteLine("Created Local " + pathstr);
                                 }
                             }
                         }
