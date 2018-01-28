@@ -435,7 +435,7 @@ namespace Unjailbreaker
             }
 
             if (verbose) log("Getting all files");
-            Crawler c = new Crawler("files", true); //gets all files in the tweak
+            Crawler c = new Crawler(Environment.CurrentDirectory + "\\files", true); //gets all files in the tweak
             c.Remove("DS_STORE");
             string s = "";
             if (verbose) log("Got files. Generating script");
@@ -563,7 +563,6 @@ namespace Unjailbreaker
                         session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
                         if (action || overwrite)
                         {
-                            if (skip.Contains(i)) skip.Remove(i);
                             session.PutFiles("files\\" + i, convert_path(i));
                             if (verbose) log("\b\b\b\bInstalled file " + i);
                         }
