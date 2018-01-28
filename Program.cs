@@ -459,26 +459,30 @@ namespace Unjailbreaker
                     if (verbose) Console.WriteLine("Got list. Creating remote environment");
                     foreach (string dir in directories)
                     {
-                        if (!session.FileExists(convert_path(dir.Replace("files", ""))) || !Directory.Exists("backup\\" + dir.Replace("files", "")))
+                        if (!session.FileExists(convert_path(dir.Replace("files", ""))))
                         {
                             //crappy method - will change
                             string pathstr = "/";
                             foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
                             {
                                 pathstr += sub + '/';
-                                if (!session.FileExists(pathstr))
+                                if (verbose) Console.WriteLine("Creating " + pathstr);
+                                if (session.FileExists(pathstr))
                                 {
-                                    if (verbose) Console.WriteLine("Creating Remote " + pathstr);
-                                    session.CreateDirectory(pathstr);
-                                    createDirIfDoesntExist("backup\\" + pathstr);
-                                    if (verbose) Console.WriteLine("Created Remote " + pathstr);
+                                    if (verbose) Console.WriteLine("No need to create " + pathstr);
+                                    continue;
                                 }
-                                if (!Directory.Exists("backup\\" + pathstr))
-                                {
-                                    if (verbose) Console.WriteLine("Creating Local " + pathstr);
-                                    createDirIfDoesntExist("backup" + pathstr);
-                                    if (verbose) Console.WriteLine("Created Local " + pathstr);
-                                }
+                                session.CreateDirectory(pathstr);
+                            }
+                        }
+                        if (!Directory.Exists("backup\\" + dir.Replace("files", "")))
+                        {
+                            //crappy method - will change
+                            string pathstr = "/";
+                            foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
+                            {
+                                pathstr += sub + '/';
+                                createDirIfDoesntExist("backup/" + pathstr);
                             }
                         }
                     }
