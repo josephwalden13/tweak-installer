@@ -114,6 +114,7 @@ namespace Unjailbreaker
         [STAThread]
         static void Main(string[] args)
         {
+            deleteIfExists("JMWCrypto.dll");
             List<string> skip = File.Exists("skip.list") ? File.ReadAllLines("skip.list").ToList() : new List<string>();
             deleteIfExists("log.txt");
             if (!File.Exists("settings"))
@@ -419,12 +420,12 @@ namespace Unjailbreaker
                     createDirIfDoesntExist("files\\usr\\lib\\SBInject");
                     foreach (string file in Directory.GetFiles("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
-                        if (verbose) log("Moving Substrate file to SBInject");
+                        if (verbose) log("Moving Substrate file " + file + " to SBInject");
                         File.Move(file, "files\\usr\\lib\\SBInject\\" + new FileInfo(file).Name);
                     }
                     foreach (string file in Directory.GetDirectories("files\\Library\\MobileSubstrate\\DynamicLibraries\\"))
                     {
-                        if (verbose) log("Moving Substrate dirs to SBInject");
+                        if (verbose) log("Moving Substrate dir " + file + " to SBInject");
                         Directory.Move(file, "files\\usr\\lib\\SBInject\\" + new DirectoryInfo(file).Name);
                     }
                     Directory.Delete("files\\Library\\MobileSubstrate", true);
@@ -439,20 +440,11 @@ namespace Unjailbreaker
             if (verbose) log("Getting all files");
             Crawler c = new Crawler(Environment.CurrentDirectory + "\\files", true); //gets all files in the tweak
             c.Remove("DS_STORE");
-            string s = "";
-            if (verbose) log("Got files. Generating script");
-            c.Files.ForEach(i =>
-                                               {
-                                                   s += ("rm " + convert_path(i) + "\n"); //creates uninstall script for tweak (used if uninstall == true)
-                                               });
             if (verbose) log("Done");
-            //File.WriteAllText("files\\" + name + ".sh", s); //add uninstall script to install folder
             if (args.Length > 0)
             {
                 if (install)
                 {
-                    if (verbose) log("Now we start to write to the device");
-                    log("Preparing to install");
                     if (session.FileExists("/plat.ent"))
                     {
                         session.RemoveFiles("/plat.ent");
@@ -470,62 +462,56 @@ namespace Unjailbreaker
                         var f = MessageBox.Show("Please do not try this");
                         Environment.Exit(0);
                     }
-                    bool overwrite = false;
                     if (verbose) log("Creating directory list");
                     string[] directories = Directory.GetDirectories("files", "*", searchOption: System.IO.SearchOption.AllDirectories);
-                    if (verbose) log("Got list. Creating remote environment");
+                    if (verbose) log("Got list. Creating backup folders");
                     foreach (string dir in directories)
                     {
-                        if (!session.FileExists(convert_path(dir.Replace("files", ""))))
+                        if (!Directory.Exists("backup\\" + dir.Replace("files\\", "\\")))
                         {
-                            //crappy method - will change
-                            string pathstr = "/";
-                            foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
-                            {
-                                pathstr += sub + '/';
-                                if (verbose) log("Creating " + pathstr);
-                                if (session.FileExists(pathstr))
-                                {
-                                    if (verbose) log("No need to create " + pathstr);
-                                    continue;
-                                }
-                                session.CreateDirectory(pathstr);
-                            }
-                        }
-                        if (!Directory.Exists("backup\\" + dir.Replace("files", "")))
-                        {
-                            //crappy method - will change
-                            string pathstr = "/";
-                            foreach (string sub in convert_path(dir.Replace("files", "")).Split('/'))
-                            {
-                                pathstr += sub + '/';
-                                createDirIfDoesntExist("backup/" + pathstr);
-                            }
+                            Directory.CreateDirectory("backup\\" + dir.Replace("files\\", "\\"));
                         }
                     }
-                    long size = 0;
-                    long done = 0;
-                    if (verbose) log("Calculating size of files to install");
-                    foreach (string file in Directory.GetFiles("files", "*", System.IO.SearchOption.AllDirectories))
+                    log("Preparing to install");
+
+                    if (verbose) log("Creating local file list");
+                    List<string> local = new List<string>();
+                    c.Files.ForEach(i => local.Add(convert_path(i)));
+
+                    if (verbose) log("Creating remote file list");
+                    List<string> remote = new List<string>();
+                    foreach (string i in Directory.GetDirectories("files"))
                     {
-                        size += new FileInfo(file).Length;
-                    }
-                    int percentage = -1;
-                    log("Installing");
-                    Console.Write("0%");
-                    c.Files.ForEach(i =>
-                    {
-                        done += new FileInfo("files\\" + i).Length;
-                        if (Math.Floor((done * 100) / (double)size) != percentage)
+                        string dir = new DirectoryInfo(i).Name;
+                        if (dir == "System")
                         {
-                            percentage = (int)Math.Floor((done * 100) / (double)size);
-                            Console.Write("\b\b\b   \b\b\b");
-                            Console.Write(percentage + "%");
+                            log("This tweak may take longer than usual to process (45 second max)");
                         }
+                        session.ExecuteCommand("find /" + dir + " > ~/files.list");
+                        session.GetFiles("/var/root/files.list", "files.list");
+                        foreach (string file in File.ReadAllLines("files.list"))
+                        {
+                            remote.Add(file);
+                        }
+                        File.Delete("files.list");
+                    }
+
+                    List<string> duplicates = new List<string>();
+                    foreach (string i in local)
+                    {
+                        if (remote.Contains(i))
+                        {
+                            duplicates.Add(i);
+                        }
+                    }
+                    bool overwrite = false;
+                    duplicates.ForEach(i =>
+                    {
+
                         bool go = false, action = false;
-                        if (session.FileExists(convert_path(i)) && !overwrite)
+                        if (!overwrite)
                         {
-                            if (verbose) log("\b\b\b\bFile already exists");
+                            if (verbose) log("\b\b\b\b" + convert_path(i) + " already exists");
                             log("\b\b\b\bDo you want to backup and overwrite " + convert_path(i) + "? (y/n/a)");
                             while (true)
                             {
@@ -556,6 +542,7 @@ namespace Unjailbreaker
                         if (!action)
                         {
                             if (verbose) log("\b\b\b\bSkipping file " + i);
+                            File.Delete("files\\" + i);
                             if (!skip.Contains(i))
                             {
                                 skip.Add(i);
@@ -563,64 +550,70 @@ namespace Unjailbreaker
                         }
                         string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
                         session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
-                        if (action || overwrite)
-                        {
-                            session.PutFiles("files\\" + i, convert_path(i));
-                            if (verbose) log("\b\b\b\bInstalled file " + i);
-                        }
                     });
+                    log("\b\b\b\b    \b\b\b\bInstalling");
+                    foreach (string dir in Directory.GetDirectories("files"))
+                    {
+                        if (verbose) log("Installing directory " + dir);
+                        session.PutFiles(dir, "/"); //put directories
+                    }
+                    foreach (string file in Directory.GetFiles("files"))
+                    {
+                        if (verbose) log("Installing file " + file);
+                        session.PutFiles(file, "/"); //put files
+                    }
                     Console.Write("\b\b\b\b    \b\b\b\bDone\n");
                     File.WriteAllLines("skip.list", skip);
                     if (Directory.Exists("files\\Applications") && jtool)
                     {
                         if (verbose) log("Entitlements needed");
+                        session.PutFiles("plat.ent", "/");
+                        if (verbose) log("Sending entitlements");
                         log("Signing applications");
                         foreach (var app in Directory.GetDirectories("files\\Applications\\"))
                         {
-                            if (verbose) log("Signing " + app);
+                            uicache = true;
+                            if (verbose) log("Signing " + convert_path(app.Replace("files\\", "\\")));
                             //Crawler crawler = new Crawler(app);
                             //Dictionary<string, object> dict = (Dictionary<string, object>)Plist.readPlist(app + "\\Info.plist");
                             //string bin = dict["CFBundleExecutable"].ToString();
+                            c = new Crawler(app, true);
                             c.Files.ForEach(i =>
                             {
-                                if (i.Contains("\\Applications\\"))
+                                bool sign = false;
+                                //if (new FileInfo(i).Name == bin)
+                                //{
+                                //    i = convert_path(i);
+                                //    session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
+                                //    session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
+                                //    session.ExecuteCommand("jtool --ent " + i + " > orig.ent");
+                                //    session.GetFiles("orig.ent", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent");
+                                //    string ent = File.ReadAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent").Replace("</dict>", "").Replace("</plist>", "");
+                                //    string[] plat = File.ReadAllLines("plat.ent");
+                                //    for (int j = 3; j != plat.Length; j++)
+                                //    {
+                                //        ent += plat[j];
+                                //    }
+                                //    File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", ent);
+                                //    session.PutFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", "orig.ent");
+                                //    session.ExecuteCommand("jtool --sign --ent orig.ent --inplace " + i);
+                                //}
+                                //else
+                                //{
+                                if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
+                                if (!sign)
                                 {
-                                    uicache = true;
-                                    bool sign = false;
-                                    //if (new FileInfo(i).Name == bin)
-                                    //{
-                                    //    i = convert_path(i);
-                                    //    session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                    //    session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                    //    session.ExecuteCommand("jtool --ent " + i + " > orig.ent");
-                                    //    session.GetFiles("orig.ent", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent");
-                                    //    string ent = File.ReadAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent").Replace("</dict>", "").Replace("</plist>", "");
-                                    //    string[] plat = File.ReadAllLines("plat.ent");
-                                    //    for (int j = 3; j != plat.Length; j++)
-                                    //    {
-                                    //        ent += plat[j];
-                                    //    }
-                                    //    File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", ent);
-                                    //    session.PutFiles(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\tweak-installer\\orig.ent", "orig.ent");
-                                    //    session.ExecuteCommand("jtool --sign --ent orig.ent --inplace " + i);
-                                    //}
-                                    //else
-                                    {
-                                        if (new FileInfo(i).Name.Split('.').Length < 2) sign = true;
-                                        if (!sign)
-                                        {
-                                            if (i.Split('.').Last() == "dylib") sign = true;
-                                        }
-                                        i = convert_path(i);
-                                        if (sign)
-                                        {
-                                            session.ExecuteCommand("jtool -e arch -arch arm64 " + i);
-                                            session.ExecuteCommand("mv " + i + ".arch_arm64 " + i);
-                                            session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + i);
-                                            if (verbose) log("Signed " + i);
-                                        }
-                                    }
+                                    if (i.Split('.').Last() == "dylib") sign = true;
                                 }
+                                i = convert_path(i);
+                                if (sign)
+                                {
+                                    session.ExecuteCommand("jtool -e arch -arch arm64 " + convert_path(app.Replace("files\\", "\\")) + i);
+                                    session.ExecuteCommand("mv " + convert_path(app.Replace("files\\", "\\")) + i + ".arch_arm64 " + convert_path(app.Replace("files\\", "\\")) + i);
+                                    session.ExecuteCommand("jtool --sign --ent /plat.ent --inplace " + convert_path(app.Replace("files\\", "\\")) + i);
+                                    if (verbose) log("Signed " + convert_path(app.Replace("files\\", "\\")) + i);
+                                }
+                                //}
                             });
                         }
                     }

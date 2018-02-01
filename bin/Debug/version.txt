@@ -1,1 +1,1 @@
-1.2.2 (LaunchDaemon fix)
+1.3 (massive speed increase & fixed application launch issues)
