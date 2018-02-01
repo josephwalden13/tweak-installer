@@ -10,6 +10,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 UI Source Code here : https://github.com/josephwalden13/Tweak-Installer-GUI
 
+macOS port thanks to [/u/syto203](https://www.reddit.com/user/syto203)
+
 A tweak installer for Elecra and other jailbreaks which support sftp. Runs on windows currently but I'm planning on porting it to other OS's including maybe an on device app. 
 Usage: 
   tic.exe [install] [uninstall] [manual] "optional path to deb file"
