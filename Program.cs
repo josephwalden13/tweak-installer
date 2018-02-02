@@ -505,7 +505,7 @@ namespace Unjailbreaker
                         }
                     }
                     bool overwrite = false;
-                    duplicates.ForEach(i =>
+                    foreach (var i in duplicates)
                     {
 
                         bool go = false, action = false;
@@ -548,9 +548,8 @@ namespace Unjailbreaker
                                 skip.Add(i);
                             }
                         }
-                        string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
-                        session.GetFiles(convert_path(i), "backup\\" + path + "\\" + new FileInfo(i).Name);
-                    });
+                        session.GetFiles(convert_path(i), @"backup\" + i.Replace("/", "\\"));
+                    }
                     log("\b\b\b\b    \b\b\b\bInstalling");
                     foreach (string dir in Directory.GetDirectories("files"))
                     {
