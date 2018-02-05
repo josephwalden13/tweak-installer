@@ -6,6 +6,7 @@ del *.tar
 del JMWCrypto.dll
 del script.sh
 del log.txt
+del control
 rmdir /s /q backup
 rmdir /s /q files
 rmdir /s /q temp
