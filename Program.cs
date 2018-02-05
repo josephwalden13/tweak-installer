@@ -359,50 +359,74 @@ namespace Unjailbreaker
                         }
                         else
                         {
-                            log("Unrecognised format. Determining ability to install");
-                            List<string> exts = new List<string>();
-                            List<string> directories = new List<string>();
-                            foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
+                            bool found = false;
+                            createDirIfDoesntExist("files\\Applications\\");
+                            foreach (string app in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
                             {
-                                directories.Add(new DirectoryInfo(dir).Name);
-                            }
-                            if (directories.Contains("bootstrap"))
-                            {
-                                log("Found bootstrap");
-                                foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
+                                if (app.Split('\\').Contains("circuitbreaker.app"))
                                 {
-                                    if (new DirectoryInfo(dir).Name == "bootstrap")
-                                    {
-                                        createDirIfDoesntExist("files\\bootstrap\\");
-                                        FileSystem.CopyDirectory(dir, "files\\bootstrap");
-                                        moveDirIfPresent("files\\bootstrap\\SBInject", "files\\bootstrap\\Library\\SBInject", "files\\bootstrap\\Library\\SBInject");
-                                        break;
-                                    }
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found)
+                            {
+                                log("Found Circuit Breaker");
+                                foreach (string app in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
+                                {
+                                    if (!app.Contains("circuitbreaker")) continue;
+                                    FileSystem.CopyDirectory(app, "files\\Applications\\" + new DirectoryInfo(app).Name, true);
+                                    break;
                                 }
                             }
                             else
                             {
-                                foreach (string i in Directory.GetFiles("temp"))
+                                log("Unrecognised format. Determining ability to install");
+                                List<string> exts = new List<string>();
+                                List<string> directories = new List<string>();
+                                foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
                                 {
-                                    string ext = new FileInfo(i).Extension;
-                                    if (!exts.Contains(ext)) exts.Add(ext);
+                                    directories.Add(new DirectoryInfo(dir).Name);
                                 }
-                                if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
+                                if (directories.Contains("bootstrap"))
                                 {
-                                    log("Substrate Addon. Installing");
-                                    createDirIfDoesntExist("files\\usr\\lib\\SBInject");
-                                    foreach (string i in Directory.GetFiles("temp"))
+                                    log("Found bootstrap");
+                                    foreach (string dir in Directory.GetDirectories("temp", "*", System.IO.SearchOption.AllDirectories))
                                     {
-                                        File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                        if (new DirectoryInfo(dir).Name == "bootstrap")
+                                        {
+                                            createDirIfDoesntExist("files\\bootstrap\\");
+                                            FileSystem.CopyDirectory(dir, "files\\bootstrap");
+                                            moveDirIfPresent("files\\bootstrap\\SBInject", "files\\bootstrap\\Library\\SBInject", "files\\bootstrap\\Library\\SBInject");
+                                            break;
+                                        }
                                     }
-                                    moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
-                                    moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
-                                    moveDirIfPresent("files\\Library\\LaunchDaemons\\", "files\\bootstrap\\Library\\LaunchDaemons\\");
                                 }
                                 else
                                 {
-                                    log("Unsafe to install. To install this tweak you must do so manually. Press enter to continue...");
-                                    Console.ReadLine();
+                                    foreach (string i in Directory.GetFiles("temp"))
+                                    {
+                                        string ext = new FileInfo(i).Extension;
+                                        if (!exts.Contains(ext)) exts.Add(ext);
+                                    }
+                                    if (exts.Count == 2 && exts.Contains(".dylib") && exts.Contains(".plist"))
+                                    {
+                                        log("Substrate Addon. Installing");
+                                        createDirIfDoesntExist("files\\usr\\lib\\SBInject");
+                                        foreach (string i in Directory.GetFiles("temp"))
+                                        {
+                                            File.Copy(i, "files\\usr\\lib\\SBInject\\" + new FileInfo(i).Name, true);
+                                        }
+                                        moveDirIfPresent("files\\Library\\PreferenceBundles\\", "files\\bootstrap\\Library\\PreferenceBundles\\");
+                                        moveDirIfPresent("files\\Library\\PreferenceLoader\\", "files\\bootstrap\\Library\\PreferenceLoader\\");
+                                        moveDirIfPresent("files\\Library\\LaunchDaemons\\", "files\\bootstrap\\Library\\LaunchDaemons\\");
+                                    }
+                                    else
+                                    {
+                                        log("Unsafe to install. To install this tweak you must do so manually. Press enter to continue...");
+                                        Console.ReadLine();
+                                        Environment.Exit(0);
+                                    }
                                 }
                             }
                         }
@@ -605,6 +629,11 @@ namespace Unjailbreaker
                                     if (i.Split('.').Last() == "dylib") sign = true;
                                 }
                                 i = convert_path(i);
+                                if (app.Contains("circuitbreaker"))
+                                {
+                                    sign = false;
+                                    if (verbose) log("Skipping signing circuitbreaker.app");
+                                }
                                 if (sign)
                                 {
                                     session.ExecuteCommand("jtool -e arch -arch arm64 " + convert_path(app.Replace("files\\", "\\")) + i);
@@ -614,21 +643,27 @@ namespace Unjailbreaker
                                 }
                                 //}
                             });
+                            c = new Crawler("files");
+                            c.Files.ForEach(i =>
+                            {
+                                session.ExecuteCommand("chmod 777 " + convert_path(i.Replace("\\files", "")));
+                            });
                         }
                     }
                     finish(session);
                 }
                 else if (uninstall)
                 {
-                    log("Uninstalling");
+                    log("Preparing to uninstall");
                     bool overwrite = false;
+                    List<string> remove = new List<string>();
                     c.Files.ForEach(i =>
                     {
                         if (!skip.Contains(i))
                         {
                             //log(convert_path(i));
                             bool go = false, action = false;
-                            if (File.Exists("backup\\" + convert_path(i)) && !overwrite)
+                            if (File.Exists("backup" + i) && !overwrite)
                             {
                                 if (verbose) log("You have a backup of this file");
                                 log("Do you want to restore " + convert_path(i) + " from your backup? (y/n/a)");
@@ -653,16 +688,27 @@ namespace Unjailbreaker
                                     if (go) break;
                                 }
                             }
-                            session.ExecuteCommand("rm " + convert_path(i, true));
-                            if (verbose) log("Uninstalled " + i);
                             if (action || overwrite)
                             {
                                 string path = i.Replace(i.Substring(i.LastIndexOf('\\')), "");
                                 session.PutFiles(new FileInfo("backup" + convert_path(i)).ToString().Replace("/", "\\"), convert_path(path) + "/" + new FileInfo(i).Name);
                                 if (verbose) log("Reinstalled " + i);
                             }
+                            else
+                            {
+                                remove.Add(convert_path(i, true));
+                            }
                         }
                     });
+                    log("Uninstalling");
+                    string script = "";
+                    foreach (string i in remove)
+                    {
+                        script += "rm " + i + "\n";
+                    }
+                    File.WriteAllText("script.sh", script);
+                    session.PutFiles("script.sh", "script.sh");
+                    session.ExecuteCommand("sh script.sh");
                     if (Directory.Exists("files\\Applications"))
                     {
                         if (verbose) log("uicache refresh required");
