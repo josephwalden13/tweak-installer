@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tweak Installer", "Tweak Installer.csproj", "{60EA8A11-B29B-458C-A011-A21D487D4823}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jLib", "..\C\jLib\jLib.csproj", "{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMWCrypto", "..\C\JMWCrypto\JMWCrypto.csproj", "{C1D2AE44-05E6-48B3-B4AA-C6FCBBC3EDC9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{60EA8A11-B29B-458C-A011-A21D487D4823}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60EA8A11-B29B-458C-A011-A21D487D4823}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60EA8A11-B29B-458C-A011-A21D487D4823}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60EA8A11-B29B-458C-A011-A21D487D4823}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA884E4B-BD96-42B1-A97F-06D28B6CC51B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1D2AE44-05E6-48B3-B4AA-C6FCBBC3EDC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1D2AE44-05E6-48B3-B4AA-C6FCBBC3EDC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D2AE44-05E6-48B3-B4AA-C6FCBBC3EDC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1D2AE44-05E6-48B3-B4AA-C6FCBBC3EDC9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1AAF2D4D-01F8-4FAC-8F06-E249F3222BC1}
+	EndGlobalSection
+EndGlobal

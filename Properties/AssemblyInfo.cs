@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Tweak Installer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("jmw")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Tweak Installer")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("808bab80-bace-4fbd-a5d1-670346591eb2")]
+[assembly: Guid("60ea8a11-b29b-458c-a011-a21d487d4823")]
 
 // Version information for an assembly consists of the following four values:
 //
