@@ -230,11 +230,11 @@ namespace Tweak_Installer
 
         void respring_Click(object sender, EventArgs e)
         {
-            getSession(host.Text, "root", pass.Text, int.Parse(port.Text)).ExecuteCommand("killall -9 SpringBoard");
+            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
             log("Respringing");
+            session.ExecuteCommand("killall -9 SpringBoard");
             log("Done");
             log("");
-            session.Close();
         }
 
         private void uicache_Click(object sender, EventArgs e)
@@ -522,60 +522,55 @@ namespace Tweak_Installer
         {
             clean();
             log("Extracting " + path);
-            try
+            //try
+            //{
+            using (ArchiveFile archiveFile = new ArchiveFile(path))
             {
-                using (ArchiveFile archiveFile = new ArchiveFile(path))
-                {
-                    if (verbose) log("Extracting data.tar.lzma || data.tar.gz");
-                    archiveFile.Extract("temp");
-                    if (verbose) log("Extracted");
-                }
-                if (verbose) log("Extracting data.tar");
-                var p = Process.Start(@"7z.exe", "e " + "temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-                if (verbose) log("Extracting control file");
-                p = Process.Start(@"7z.exe", "e " + "temp\\control.tar.gz -o.");
-                if (verbose) log("Waiting for subprocess to complete");
-                p.WaitForExit();
-                if (verbose) log("Successfully extracted data.tar");
-                using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-                {
-                    if (verbose) log("Extracting deb files");
-                    archiveFile.Extract("files");
-                    if (verbose) log("Extracted");
-                }
-                using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-                {
-                    if (verbose) log("Extracting deb files");
-                    archiveFile.Extract("files");
-                    if (verbose) log("Extracted");
-                }
-                using (ArchiveFile archiveFile = new ArchiveFile("control.tar"))
-                {
-                    archiveFile.Extract(".");
-                }
-                Dictionary<string, string> control = new Dictionary<string, string>();
-                foreach (string i in File.ReadAllLines("control"))
-                {
-                    control.Add(i.Split(':')[0].ToLower().Replace(" ", ""), i.Split(':')[1]);
-                }
-                if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
-                {
-                    using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-                    {
-                        archiveFile.Extract("temp");
-                    }
-                    foreach (string app in Directory.GetDirectories("temp\\Applications\\"))
-                    {
-                        File.Create(app.Replace("temp\\", "files\\") + "\\skip-signing").Close();
-                    }
-                }
-                clean();
+                if (verbose) log("Extracting data.tar.lzma || data.tar.gz");
+                archiveFile.Extract("temp");
+                if (verbose) log("Extracted");
             }
-            catch (Exception e)
+            if (verbose) log("Extracting data.tar");
+            var p = Process.Start(@"7z.exe", "e " + "temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+            if (verbose) log("Waiting for subprocess to complete");
+            p.WaitForExit();
+            if (verbose) log("Extracting control file");
+            p = Process.Start(@"7z.exe", "e " + "temp\\control.tar.gz -o.");
+            p.WaitForExit();
+            if (verbose) log("Successfully extracted data.tar");
+            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
             {
-                log("Not a valid deb file / Access Denied");
-                throw e;
-            };
+                if (verbose) log("Extracting deb files");
+                archiveFile.Extract("files");
+                if (verbose) log("Extracted");
+            }
+            using (ArchiveFile archiveFile = new ArchiveFile("control.tar"))
+            {
+                archiveFile.Extract(".");
+            }
+            Dictionary<string, string> control = new Dictionary<string, string>();
+            foreach (string i in File.ReadAllLines("control"))
+            {
+                control.Add(i.Split(':')[0].ToLower().Replace(" ", ""), i.Split(':')[1]);
+            }
+            if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
+            {
+                using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                {
+                    archiveFile.Extract("temp");
+                }
+                foreach (string app in Directory.GetDirectories("temp\\Applications\\"))
+                {
+                    File.Create(app.Replace("temp\\", "files\\") + "\\skip-signing").Close();
+                }
+            }
+            clean();
+            //}
+            //catch (Exception e)
+            //{
+            //    log("Not a valid deb file / Access Denied");
+            //    throw e;
+            //};
         }
 
         public void clean()
@@ -658,7 +653,6 @@ namespace Tweak_Installer
                 session.ExecuteCommand("killall -9 SpringBoard"); //respring
             }
             session.Close();
-            if (verbose) log("Done");
         }
 
         private void selectDebsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -784,7 +778,6 @@ namespace Tweak_Installer
             if (verbose) log("Getting all files");
             crawler = new Crawler(Environment.CurrentDirectory + "\\files", true); //gets all files in the tweak
             crawler.Remove("DS_STORE");
-            if (verbose) log("Done");
         }
 
         public void installFiles(Session session)
@@ -905,7 +898,6 @@ namespace Tweak_Installer
                 if (verbose) log("Installing file " + file);
                 session.PutFiles(file, "/"); //put files
             }
-            log("Done");
             File.WriteAllLines("skip.list", skip);
             if (Directory.Exists("files\\Applications") && jtool)
             {
@@ -954,8 +946,8 @@ namespace Tweak_Installer
                 session.ExecuteCommand("./script && rm script");
             }
             clean();
-            log("Done");
             finish(session);
+            log("Done");
         }
 
         public void uninstallFiles(Session session)
@@ -1037,8 +1029,8 @@ namespace Tweak_Installer
                 session.ExecuteCommand("./script && rm script");
             }
             clean();
-            log("Done");
             finish(session);
+            log("Done");
         }
     }
 }

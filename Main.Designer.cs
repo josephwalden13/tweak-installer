@@ -55,13 +55,13 @@
             this.output = new System.Windows.Forms.TextBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectDebsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.advancedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.extractEntitlementsFromLocalFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.selectDebsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.verboseModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.dontSignApplicationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.useCustomEntitlementsFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.useDefaultEntitlementsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.dontSignApplicationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.verboseModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -233,7 +233,7 @@
             this.version.Name = "version";
             this.version.Size = new System.Drawing.Size(25, 13);
             this.version.TabIndex = 16;
-            this.version.Text = "1.3";
+            this.version.Text = "2.0";
             this.version.Click += new System.EventHandler(this.version_Click);
             // 
             // twitter
@@ -414,6 +414,13 @@
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
+            // selectDebsToolStripMenuItem
+            // 
+            this.selectDebsToolStripMenuItem.Name = "selectDebsToolStripMenuItem";
+            this.selectDebsToolStripMenuItem.Size = new System.Drawing.Size(131, 22);
+            this.selectDebsToolStripMenuItem.Text = "Select Files";
+            this.selectDebsToolStripMenuItem.Click += new System.EventHandler(this.selectDebsToolStripMenuItem_Click);
+            // 
             // advancedToolStripMenuItem
             // 
             this.advancedToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -434,27 +441,6 @@
             this.extractEntitlementsFromLocalFileToolStripMenuItem.Text = "Extract entitlements from local file";
             this.extractEntitlementsFromLocalFileToolStripMenuItem.Click += new System.EventHandler(this.extractEntitlementsFromLocalFileToolStripMenuItem_Click);
             // 
-            // selectDebsToolStripMenuItem
-            // 
-            this.selectDebsToolStripMenuItem.Name = "selectDebsToolStripMenuItem";
-            this.selectDebsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.selectDebsToolStripMenuItem.Text = "Select Files";
-            this.selectDebsToolStripMenuItem.Click += new System.EventHandler(this.selectDebsToolStripMenuItem_Click);
-            // 
-            // verboseModeToolStripMenuItem
-            // 
-            this.verboseModeToolStripMenuItem.Name = "verboseModeToolStripMenuItem";
-            this.verboseModeToolStripMenuItem.Size = new System.Drawing.Size(254, 22);
-            this.verboseModeToolStripMenuItem.Text = "Verbose mode";
-            this.verboseModeToolStripMenuItem.Click += new System.EventHandler(this.verboseModeToolStripMenuItem_Click);
-            // 
-            // dontSignApplicationsToolStripMenuItem
-            // 
-            this.dontSignApplicationsToolStripMenuItem.Name = "dontSignApplicationsToolStripMenuItem";
-            this.dontSignApplicationsToolStripMenuItem.Size = new System.Drawing.Size(254, 22);
-            this.dontSignApplicationsToolStripMenuItem.Text = "Don\'t sign applications";
-            this.dontSignApplicationsToolStripMenuItem.Click += new System.EventHandler(this.dontSignApplicationsToolStripMenuItem_Click);
-            // 
             // useCustomEntitlementsFileToolStripMenuItem
             // 
             this.useCustomEntitlementsFileToolStripMenuItem.Name = "useCustomEntitlementsFileToolStripMenuItem";
@@ -468,6 +454,20 @@
             this.useDefaultEntitlementsToolStripMenuItem.Size = new System.Drawing.Size(254, 22);
             this.useDefaultEntitlementsToolStripMenuItem.Text = "Use default entitlements";
             this.useDefaultEntitlementsToolStripMenuItem.Click += new System.EventHandler(this.useDefaultEntitlementsToolStripMenuItem_Click);
+            // 
+            // dontSignApplicationsToolStripMenuItem
+            // 
+            this.dontSignApplicationsToolStripMenuItem.Name = "dontSignApplicationsToolStripMenuItem";
+            this.dontSignApplicationsToolStripMenuItem.Size = new System.Drawing.Size(254, 22);
+            this.dontSignApplicationsToolStripMenuItem.Text = "Don\'t sign applications";
+            this.dontSignApplicationsToolStripMenuItem.Click += new System.EventHandler(this.dontSignApplicationsToolStripMenuItem_Click);
+            // 
+            // verboseModeToolStripMenuItem
+            // 
+            this.verboseModeToolStripMenuItem.Name = "verboseModeToolStripMenuItem";
+            this.verboseModeToolStripMenuItem.Size = new System.Drawing.Size(254, 22);
+            this.verboseModeToolStripMenuItem.Text = "Verbose mode";
+            this.verboseModeToolStripMenuItem.Click += new System.EventHandler(this.verboseModeToolStripMenuItem_Click);
             // 
             // Main
             // 
