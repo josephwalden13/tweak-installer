@@ -522,55 +522,55 @@ namespace Tweak_Installer
         {
             clean();
             log("Extracting " + path);
-            //try
-            //{
-            using (ArchiveFile archiveFile = new ArchiveFile(path))
+            try
             {
-                if (verbose) log("Extracting data.tar.lzma || data.tar.gz");
-                archiveFile.Extract("temp");
-                if (verbose) log("Extracted");
-            }
-            if (verbose) log("Extracting data.tar");
-            var p = Process.Start(@"7z.exe", "e " + "temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
-            if (verbose) log("Waiting for subprocess to complete");
-            p.WaitForExit();
-            if (verbose) log("Extracting control file");
-            p = Process.Start(@"7z.exe", "e " + "temp\\control.tar.gz -o.");
-            p.WaitForExit();
-            if (verbose) log("Successfully extracted data.tar");
-            using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
-            {
-                if (verbose) log("Extracting deb files");
-                archiveFile.Extract("files");
-                if (verbose) log("Extracted");
-            }
-            using (ArchiveFile archiveFile = new ArchiveFile("control.tar"))
-            {
-                archiveFile.Extract(".");
-            }
-            Dictionary<string, string> control = new Dictionary<string, string>();
-            foreach (string i in File.ReadAllLines("control"))
-            {
-                control.Add(i.Split(':')[0].ToLower().Replace(" ", ""), i.Split(':')[1]);
-            }
-            if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
-            {
+                using (ArchiveFile archiveFile = new ArchiveFile(path))
+                {
+                    if (verbose) log("Extracting data.tar.lzma || data.tar.gz");
+                    archiveFile.Extract("temp");
+                    if (verbose) log("Extracted");
+                }
+                if (verbose) log("Extracting data.tar");
+                var p = Process.Start(@"7z.exe", "e " + "temp\\data.tar." + (File.Exists("temp\\data.tar.lzma") ? "lzma" : "gz") + " -o.");
+                if (verbose) log("Waiting for subprocess to complete");
+                p.WaitForExit();
+                if (verbose) log("Extracting control file");
+                p = Process.Start(@"7z.exe", "e " + "temp\\control.tar.gz -o.");
+                p.WaitForExit();
+                if (verbose) log("Successfully extracted data.tar");
                 using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
                 {
-                    archiveFile.Extract("temp");
+                    if (verbose) log("Extracting deb files");
+                    archiveFile.Extract("files");
+                    if (verbose) log("Extracted");
                 }
-                foreach (string app in Directory.GetDirectories("temp\\Applications\\"))
+                using (ArchiveFile archiveFile = new ArchiveFile("control.tar"))
                 {
-                    File.Create(app.Replace("temp\\", "files\\") + "\\skip-signing").Close();
+                    archiveFile.Extract(".");
                 }
+                Dictionary<string, string> control = new Dictionary<string, string>();
+                foreach (string i in File.ReadAllLines("control"))
+                {
+                    control.Add(i.Split(':')[0].ToLower().Replace(" ", ""), i.Split(':')[1]);
+                }
+                if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
+                {
+                    using (ArchiveFile archiveFile = new ArchiveFile("data.tar"))
+                    {
+                        archiveFile.Extract("temp");
+                    }
+                    foreach (string app in Directory.GetDirectories("temp\\Applications\\"))
+                    {
+                        File.Create(app.Replace("temp\\", "files\\") + "\\skip-signing").Close();
+                    }
+                }
+                clean();
             }
-            clean();
-            //}
-            //catch (Exception e)
-            //{
-            //    log("Not a valid deb file / Access Denied");
-            //    throw e;
-            //};
+            catch (Exception e)
+            {
+                log("Not a valid deb file / Access Denied");
+                throw e;
+            };
         }
 
         public void clean()
@@ -731,7 +731,7 @@ namespace Tweak_Installer
             {
                 using (WebClient c = new WebClient())
                 {
-                    c.DownloadFile("https://github.com/josephwalden13/tweak-installer/blob/master/bin/Debug/platform-binary.ent", "platform-binary.ent");
+                    c.DownloadFile("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/platform-binary.ent", "platform-binary.ent");
                     deleteIfExists("entitlements.ent");
                     File.Copy("platform-binary.ent", "entitlements.ent");
                     output.Text += "Using default entitlements" + Environment.NewLine;
