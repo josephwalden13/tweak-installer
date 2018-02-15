@@ -141,6 +141,7 @@ namespace Tweak_Installer
         {
             if (Environment.GetCommandLineArgs().Contains("dont-update")) update = false;
 
+            select.MouseClick += Select_MouseClick;
             deleteIfExists("tic.exe");
 
             ContextMenu installmenu = new ContextMenu();
@@ -192,6 +193,21 @@ namespace Tweak_Installer
             {
                 port.Text = "22";
             }
+        }
+
+        private void Select_MouseClick(object sender, MouseEventArgs e)
+        {
+            //switch (e.Button)
+            //{
+            //    case MouseButtons.Right:
+            //        ContextMenu selectMenu = new ContextMenu();
+            //        foreach (string i in tweaks)
+            //        {
+            //            selectMenu.MenuItems.Add(new FileInfo(i).Name);
+            //        }
+            //        select.ContextMenu = selectMenu;
+            //        break;
+            //}
         }
 
         private void RemoveFilza(object sender, EventArgs e)
@@ -551,7 +567,9 @@ namespace Tweak_Installer
                 Dictionary<string, string> control = new Dictionary<string, string>();
                 foreach (string i in File.ReadAllLines("control"))
                 {
-                    control.Add(i.Split(':')[0].ToLower().Replace(" ", ""), i.Split(':')[1]);
+                    var j = i.Split(':');
+                    if (j.Length < 2) return;
+                    control.Add(j[0].ToLower().Replace(" ", ""), j[1]);
                 }
                 if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
                 {
