@@ -328,7 +328,7 @@ namespace Tweak_Installer
 
         public List<string> tweaks = new List<string>(), skip = new List<string>();
         public string[] data;
-        public bool uicache = false, jtool = false, convert = false, dont_sign = false;
+        public bool uicache = false, jtool = false, convert = false, dont_sign = false, dont_del_empty_dirs = false;
         public Crawler crawler;
         public string user;
         public Session session;
@@ -605,9 +605,9 @@ namespace Tweak_Installer
 
         public void getJailbreakSpecificOptions(Session session)
         {
-            if (session.FileExists("/usr/lib/SBInject"))
+            if (session.FileExists("/usr/lib/SBInject") && !session.FileExists("/electra"))
             {
-                if (verbose) log("You're running Electa. I'll convert tweaks to that format & add entitlements to applications");
+                if (verbose) log("You're running Electa (non RC build). I'll convert tweaks to that format & add entitlements to applications");
                 convert = true;
                 if (!session.FileExists("/bootstrap/Library/Themes"))
                 {
@@ -1031,15 +1031,18 @@ namespace Tweak_Installer
                 if (verbose) log("uicache refresh required");
                 uicache = true;
             }
-            log("Locating and removing *some* empty folders");
-            session.ExecuteCommand("find /System/Library/Themes/ -type d -empty -delete");
-            session.ExecuteCommand("find /usr/ -type d -empty -delete");
-            session.ExecuteCommand("find /Applications/ -type d -empty -delete");
-            session.ExecuteCommand("find /Library/ -type d -empty -delete");
-            session.ExecuteCommand("find /bootstrap/Library/Themes/* -type d -empty -delete");
-            session.ExecuteCommand("find /bootstrap/Library/PreferenceLoader/* -type d -empty -delete");
-            session.ExecuteCommand("find /bootstrap/Library/PreferenceBundles/* -type d -empty -delete");
-            session.ExecuteCommand("find /bootstrap/Library/SBInject/* -type d -empty -delete");
+            if (!dont_del_empty_dirs)
+            {
+                log("Locating and removing *some* empty folders");
+                session.ExecuteCommand("find /System/Library/Themes/ -type d -empty -delete");
+                session.ExecuteCommand("find /usr/ -type d -empty -delete");
+                session.ExecuteCommand("find /Applications/ -type d -empty -delete");
+                session.ExecuteCommand("find /Library/ -type d -empty -delete");
+                session.ExecuteCommand("find /bootstrap/Library/Themes/* -type d -empty -delete");
+                session.ExecuteCommand("find /bootstrap/Library/PreferenceLoader/* -type d -empty -delete");
+                session.ExecuteCommand("find /bootstrap/Library/PreferenceBundles/* -type d -empty -delete");
+                session.ExecuteCommand("find /bootstrap/Library/SBInject/* -type d -empty -delete");
+            }
             if (File.Exists("postrm"))
             {
                 if (verbose) log("Running postrm script");
