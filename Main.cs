@@ -80,7 +80,16 @@ namespace Tweak_Installer
                 clean();
                 if (tweak.Contains(".deb"))
                 {
-                    extractDeb(tweak);
+                    if (rc)
+                    {
+                        if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
+                        session.PutFiles(tweak, "/electra/tweakinstaller/" + tweak);
+                        session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + tweak);
+                    }
+                    else
+                    {
+                        extractDeb(tweak);
+                    }
                 }
                 else if (tweak.Contains(".ipa"))
                 {
@@ -114,7 +123,14 @@ namespace Tweak_Installer
                 clean();
                 if (tweak.Contains(".deb"))
                 {
-                    extractDeb(tweak);
+                    if (rc)
+                    {
+                        var i = session.ExecuteCommand("dpkg -r " + getPkgID(tweak));
+                    }
+                    else
+                    {
+                        extractDeb(tweak);
+                    }
                 }
                 else if (tweak.Contains(".ipa"))
                 {
@@ -141,20 +157,18 @@ namespace Tweak_Installer
         {
             if (Environment.GetCommandLineArgs().Contains("dont-update")) update = false;
 
-            select.MouseClick += Select_MouseClick;
             deleteIfExists("tic.exe");
 
             ContextMenu installmenu = new ContextMenu();
             installmenu.MenuItems.Add("Install Filza");
             installmenu.MenuItems[0].Click += InstallFilza;
-
             installbtn.ContextMenu = installmenu;
 
             ContextMenu uninstallmenu = new ContextMenu();
             uninstallmenu.MenuItems.Add("Uninstall Filza");
             uninstallmenu.MenuItems[0].Click += RemoveFilza;
-
             uninstallbtn.ContextMenu = uninstallmenu;
+
             //check for updates
             if (update)
             {
@@ -193,21 +207,6 @@ namespace Tweak_Installer
             {
                 port.Text = "22";
             }
-        }
-
-        private void Select_MouseClick(object sender, MouseEventArgs e)
-        {
-            //switch (e.Button)
-            //{
-            //    case MouseButtons.Right:
-            //        ContextMenu selectMenu = new ContextMenu();
-            //        foreach (string i in tweaks)
-            //        {
-            //            selectMenu.MenuItems.Add(new FileInfo(i).Name);
-            //        }
-            //        select.ContextMenu = selectMenu;
-            //        break;
-            //}
         }
 
         private void RemoveFilza(object sender, EventArgs e)
@@ -328,7 +327,7 @@ namespace Tweak_Installer
 
         public List<string> tweaks = new List<string>(), skip = new List<string>();
         public string[] data;
-        public bool uicache = false, jtool = false, convert = false, dont_sign = false, dont_del_empty_dirs = false;
+        public bool uicache = false, jtool = false, convert = false, dont_sign = false, dont_del_empty_dirs = false, rc = false;
         public Crawler crawler;
         public string user;
         public Session session;
@@ -568,7 +567,7 @@ namespace Tweak_Installer
                 foreach (string i in File.ReadAllLines("control"))
                 {
                     var j = i.Split(':');
-                    if (j.Length < 2) return;
+                    if (j.Length < 2) continue;
                     control.Add(j[0].ToLower().Replace(" ", ""), j[1]);
                 }
                 if (Directory.Exists("files\\Applications") && control.ContainsKey("skipsigning"))
@@ -583,6 +582,38 @@ namespace Tweak_Installer
                     }
                 }
                 clean();
+            }
+            catch (Exception e)
+            {
+                log("Not a valid deb file / Access Denied");
+                throw e;
+            };
+        }
+
+        string getPkgID(string path)
+        {
+            clean();
+            try
+            {
+                using (ArchiveFile archiveFile = new ArchiveFile(path))
+                {
+                    archiveFile.Extract("temp");
+                }
+                Process p = Process.Start(@"7z.exe", "e " + "temp\\control.tar.gz -o.");
+                p.WaitForExit();
+                using (ArchiveFile archiveFile = new ArchiveFile("control.tar"))
+                {
+                    archiveFile.Extract(".");
+                }
+                Dictionary<string, string> control = new Dictionary<string, string>();
+                foreach (string i in File.ReadAllLines("control"))
+                {
+                    var j = i.Split(':');
+                    if (j.Length < 2) continue;
+                    control.Add(j[0].ToLower().Replace(" ", ""), j[1]);
+                }
+                clean();
+                return control["package"];
             }
             catch (Exception e)
             {
@@ -616,6 +647,16 @@ namespace Tweak_Installer
                     log("Themes folder missing. Touching /bootstrap/Library/Themes/dont-delete to prevent this in future");
                 }
                 jtool = true;
+            }
+            if (session.FileExists("/electra"))
+            {
+                if (!session.FileExists("/var/lib/dpkg/updates"))
+                {
+                    session.CreateDirectory("/var/lib/dpkg/updates");
+                    log("Fixed dpkg");
+                }
+                dont_del_empty_dirs = true;
+                rc = true;
             }
             if (session.FileExists("/jb/"))
             {

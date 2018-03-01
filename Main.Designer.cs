@@ -233,7 +233,7 @@
             this.version.Name = "version";
             this.version.Size = new System.Drawing.Size(36, 13);
             this.version.TabIndex = 16;
-            this.version.Text = "2.0.3";
+            this.version.Text = "2.0.5";
             this.version.Click += new System.EventHandler(this.version_Click);
             // 
             // twitter
