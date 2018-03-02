@@ -1,1 +1,1 @@
-2.0.5
+2.1 (Installs IPAs with AppSync and DEBs with dpkg on electra 1.X

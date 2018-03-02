@@ -83,8 +83,17 @@ namespace Tweak_Installer
                     if (rc)
                     {
                         if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
-                        session.PutFiles(tweak, "/electra/tweakinstaller/" + tweak);
-                        session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + tweak);
+                        session.PutFiles(tweak, "/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                        var i = session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + convert_path(new FileInfo(tweak).Name, true));
+                        session.RemoveFiles("/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                        if (i.IsSuccess)
+                        {
+                            log("Installed " + tweak + " with dpkg");
+                        }
+                        else
+                        {
+                            log(i.ErrorOutput);
+                        }
                     }
                     else
                     {
@@ -93,7 +102,32 @@ namespace Tweak_Installer
                 }
                 else if (tweak.Contains(".ipa"))
                 {
-                    extractIPA(tweak);
+                    if (rc)
+                    {
+                        log("Installing IPA with AppSync");
+                        if (session.FileExists("/usr/bin/appinst"))
+                        {
+                            session.PutFiles(tweak, "/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                            var i = session.ExecuteCommand("appinst /electra/tweakinstaller/" + convert_path(new FileInfo(tweak).Name, true));
+                            session.RemoveFiles("/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                            if (i.IsSuccess)
+                            {
+                                log("Installed IPA");
+                            }
+                            else
+                            {
+                                log(i.ErrorOutput);
+                            }
+                        }
+                        else
+                        {
+                            log("Couldn't install ipa. Please install appinst and AppSync from Karen's repo (https://cydia.angelxwind.net/)");
+                        }
+                    }
+                    else
+                    {
+                        extractIPA(tweak);
+                    }
                 }
                 else
                 {
@@ -126,6 +160,7 @@ namespace Tweak_Installer
                     if (rc)
                     {
                         var i = session.ExecuteCommand("dpkg -r " + getPkgID(tweak));
+                        log("Removed " + tweak + " with dpkg");
                     }
                     else
                     {
@@ -134,7 +169,14 @@ namespace Tweak_Installer
                 }
                 else if (tweak.Contains(".ipa"))
                 {
-                    extractIPA(tweak);
+                    if (rc)
+                    {
+                        log("Can't remove IPA on this version of Electra, please uninstall via SpringBoard");
+                    }
+                    else
+                    {
+                        extractIPA(tweak);
+                    }
                 }
                 else
                 {
