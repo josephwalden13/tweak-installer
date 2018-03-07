@@ -1,1 +1,1 @@
-2.1 (Installs IPAs with AppSync and DEBs with dpkg on electra 1.X
+2.1.1 (Fixes IPA not found issue)

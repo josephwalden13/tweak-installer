@@ -121,6 +121,7 @@ namespace Tweak_Installer
                     if (rc)
                     {
                         log("Installing IPA with AppSync");
+                        if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
                         if (session.FileExists("/usr/bin/appinst"))
                         {
                             string file = CalculateMD5Hash(tweak) + ".ipa";
@@ -707,7 +708,7 @@ namespace Tweak_Installer
                 }
                 jtool = true;
             }
-            if (session.FileExists("/electra"))
+            if (session.FileExists("/usr/bin/dpkg"))
             {
                 if (!session.FileExists("/var/lib/dpkg/updates"))
                 {

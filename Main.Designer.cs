@@ -231,9 +231,9 @@
             this.version.ForeColor = System.Drawing.Color.DimGray;
             this.version.Location = new System.Drawing.Point(12, 33);
             this.version.Name = "version";
-            this.version.Size = new System.Drawing.Size(25, 13);
+            this.version.Size = new System.Drawing.Size(36, 13);
             this.version.TabIndex = 16;
-            this.version.Text = "2.1";
+            this.version.Text = "2.1.1";
             this.version.Click += new System.EventHandler(this.version_Click);
             // 
             // twitter
