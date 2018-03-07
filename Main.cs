@@ -15,6 +15,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +26,20 @@ namespace Tweak_Installer
 {
     public partial class Main : Form
     {
+        public string CalculateMD5Hash(string input)
+
+        {
+            MD5 md5 = System.Security.Cryptography.MD5.Create();
+            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+            byte[] hash = md5.ComputeHash(inputBytes);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("X2"));
+            }
+            return sb.ToString();
+
+        }
         static bool verbose = false, update = true;
         bool enabled = false;
         public Main()
@@ -82,10 +97,11 @@ namespace Tweak_Installer
                 {
                     if (rc)
                     {
+                        string file = CalculateMD5Hash(tweak) + ".deb";
                         if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
-                        session.PutFiles(tweak, "/electra/tweakinstaller/" + new FileInfo(tweak).Name);
-                        var i = session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + convert_path(new FileInfo(tweak).Name, true));
-                        session.RemoveFiles("/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                        session.PutFiles(tweak, "/electra/tweakinstaller/" + file);
+                        var i = session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + file);
+                        session.RemoveFiles("/electra/tweakinstaller/" + file);
                         if (i.IsSuccess)
                         {
                             log("Installed " + tweak + " with dpkg");
@@ -107,9 +123,10 @@ namespace Tweak_Installer
                         log("Installing IPA with AppSync");
                         if (session.FileExists("/usr/bin/appinst"))
                         {
-                            session.PutFiles(tweak, "/electra/tweakinstaller/" + new FileInfo(tweak).Name);
-                            var i = session.ExecuteCommand("appinst /electra/tweakinstaller/" + convert_path(new FileInfo(tweak).Name, true));
-                            session.RemoveFiles("/electra/tweakinstaller/" + new FileInfo(tweak).Name);
+                            string file = CalculateMD5Hash(tweak) + ".ipa";
+                            session.PutFiles(tweak, "/electra/tweakinstaller/" + file);
+                            var i = session.ExecuteCommand("appinst /electra/tweakinstaller/" + file);
+                            session.RemoveFiles("/electra/tweakinstaller/" + file);
                             if (i.IsSuccess)
                             {
                                 log("Installed IPA");

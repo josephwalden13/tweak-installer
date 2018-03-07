@@ -30,7 +30,5 @@ C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\ob
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\obj\Debug\Tweak Installer.pdb
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\bin\Debug\jLib.dll
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\bin\Debug\JMWCrypto.dll
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\bin\Debug\jLib.pdb
-C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\bin\Debug\JMWCrypto.pdb
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\obj\Debug\Tweak_Installer.YNAD.resources
 C:\Users\josep\OneDrive\Documents\Visual Studio 2017\Projects\tweak-installer\obj\Debug\Tweak Installer.csprojResolveAssemblyReference.cache
