@@ -26,11 +26,12 @@ namespace Tweak_Installer
 {
     public partial class Main : Form
     {
+        static bool verbose = false, update = true, enabled = false;
+        //md5 function from https://blogs.msdn.microsoft.com/csharpfaq/2006/10/09/how-do-i-calculate-a-md5-hash-from-a-string/
         public string CalculateMD5Hash(string input)
-
         {
-            MD5 md5 = System.Security.Cryptography.MD5.Create();
-            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+            MD5 md5 = MD5.Create();
+            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
             byte[] hash = md5.ComputeHash(inputBytes);
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < hash.Length; i++)
@@ -40,35 +41,25 @@ namespace Tweak_Installer
             return sb.ToString();
 
         }
-        static bool verbose = false, update = true;
-        bool enabled = false;
         public Main()
         {
             InitializeComponent();
         }
-        string join(List<string> s, string i)
-        {
-            string temp = "";
-            foreach (string j in s)
-            {
-                temp += '"' + j + '"' + i;
-            }
-            return temp;
-        }
+
         private void select_Click(object sender, EventArgs e)
         {
-            openFileDialog.Multiselect = true;
-            openFileDialog.Filter = "Tweaks|*.deb;*.zip;*.ipa";
-            tweaks.Clear();
-            var f = openFileDialog.ShowDialog();
+            openFileDialog.Multiselect = true; //allow file dialog to select multiple files
+            openFileDialog.Filter = "Tweaks|*.deb;*.zip;*.ipa"; //set valid files to deb, zip or ipa
+            tweaks.Clear(); //clear current list of debs
+            var f = openFileDialog.ShowDialog(); //open the file dialog
             switch (f)
             {
                 case DialogResult.OK:
                     {
-                        enabled = true;
+                        enabled = true; //enable install / uninstall functions
                         foreach (string i in openFileDialog.FileNames)
                         {
-                            tweaks.Add(i);
+                            tweaks.Add(i); //add each file to the deb list
                         }
                         break;
                     }
@@ -80,61 +71,61 @@ namespace Tweak_Installer
 
         private void install_Click(object sender, EventArgs e)
         {
-            emptyDir("files");
+            emptyDir("files"); //empty temporary directory
             if (!enabled)
             {
                 MessageBox.Show("Please select a deb, ipa or zip first");
                 return;
             }
-            clean();
-            getOptions();
-            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
-            getJailbreakSpecificOptions(session);
+            clean(); //clear temporary files / directories
+            getOptions(); //get options 
+            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text)); //open an ssh session
+            getJailbreakSpecificOptions(session); //get options specific to certain jailbreaks - e.g. sign binaries with platform-binary on Libre / Electra
             foreach (string tweak in tweaks)
             {
-                clean();
-                if (tweak.Contains(".deb"))
+                clean(); //clear temp files from previous packages / apps
+                if (tweak.Contains(".deb")) //if file is a deb
                 {
-                    if (rc)
+                    if (rc) //if full jailbreak
                     {
-                        string file = CalculateMD5Hash(tweak) + ".deb";
-                        if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
-                        session.PutFiles(tweak, "/electra/tweakinstaller/" + file);
-                        var i = session.ExecuteCommand("dpkg -i /electra/tweakinstaller/" + file);
-                        session.RemoveFiles("/electra/tweakinstaller/" + file);
+                        string file = CalculateMD5Hash(tweak) + ".deb"; //calculate hash to use as filename
+                        if (!session.FileExists("/tweakinstaller")) session.CreateDirectory("/tweakinstaller"); //create folder to store debs
+                        session.PutFiles(tweak, "/tweakinstaller/" + file); //move deb file to tweak installer directory
+                        var i = session.ExecuteCommand("dpkg -i /tweakinstaller/" + file); //install using dpkg
+                        session.RemoveFiles("/tweakinstaller/" + file); //delete deb
                         if (i.IsSuccess)
                         {
-                            log("Installed " + tweak + " with dpkg");
+                            log("Installed " + tweak + " with dpkg"); //log sucess
                         }
                         else
                         {
-                            log(i.ErrorOutput);
+                            log(i.ErrorOutput); //log failure
                         }
                     }
                     else
                     {
-                        extractDeb(tweak);
+                        extractDeb(tweak); //extract deb for manual installation
                     }
                 }
-                else if (tweak.Contains(".ipa"))
+                else if (tweak.Contains(".ipa")) //if file is an ipa
                 {
-                    if (rc)
+                    if (rc) //if full jailbreak
                     {
                         log("Installing IPA with AppSync");
-                        if (!session.FileExists("/electra/tweakinstaller")) session.CreateDirectory("/electra/tweakinstaller");
-                        if (session.FileExists("/usr/bin/appinst"))
+                        if (!session.FileExists("/tweakinstaller")) session.CreateDirectory("/tweakinstaller"); //create tweakinstaller directory if it doesn't exist
+                        if (session.FileExists("/usr/bin/appinst")) //check for appinst
                         {
-                            string file = CalculateMD5Hash(tweak) + ".ipa";
-                            session.PutFiles(tweak, "/electra/tweakinstaller/" + file);
-                            var i = session.ExecuteCommand("appinst /electra/tweakinstaller/" + file);
-                            session.RemoveFiles("/electra/tweakinstaller/" + file);
+                            string file = CalculateMD5Hash(tweak) + ".ipa"; //calculate hash to use as filename
+                            session.PutFiles(tweak, "/tweakinstaller/" + file); //move ipa to tweakinstaller dir
+                            var i = session.ExecuteCommand("appinst /tweakinstaller/" + file); //use appinst to install ipa
+                            session.RemoveFiles("/tweakinstaller/" + file); //remove ipa
                             if (i.IsSuccess)
                             {
-                                log("Installed IPA");
+                                log("Installed IPA"); //log success
                             }
                             else
                             {
-                                log(i.ErrorOutput);
+                                log(i.ErrorOutput); //log failure
                             }
                         }
                         else
@@ -144,91 +135,79 @@ namespace Tweak_Installer
                     }
                     else
                     {
-                        extractIPA(tweak);
+                        extractIPA(tweak); //extract ipa for manual installation
                     }
                 }
-                else
+                else if (tweak.Contains(".zip")) //if file is a zip
                 {
-                    extractZip(tweak);
+                    extractZip(tweak); //try to extract zip file
                 }
             }
-            if (convert) convertTweaks();
-            getFiles();
-            installFiles(session);
-            log("");
+            if (convert) convertTweaks(); //if tweaks need converting to a different format (e.g. for electra 0.X) convert them
+            getFiles(); //get list of files in tweaks
+            installFiles(session); //install files over ssh
+            log(""); //log newline
         }
 
         private void Uninstall_Click(object sender, EventArgs e)
         {
-            emptyDir("files");
+            emptyDir("files"); //remove temporary files
             if (!enabled)
             {
                 MessageBox.Show("Please select a deb, ipa or zip first");
                 return;
             }
-            clean();
-            getOptions();
-            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
-            getJailbreakSpecificOptions(session);
+            getOptions(); //get options
+            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text)); //open ssh session
+            getJailbreakSpecificOptions(session); //get tool specific options (e.g. whether or not files should be signed differently)
             foreach (string tweak in tweaks)
             {
-                clean();
+                clean(); //remove temporary files & directories
                 if (tweak.Contains(".deb"))
                 {
-                    if (rc)
+                    if (rc) //if full jailbreak
                     {
-                        var i = session.ExecuteCommand("dpkg -r " + getPkgID(tweak));
-                        log("Removed " + tweak + " with dpkg");
+                        var i = session.ExecuteCommand("dpkg -r " + getPkgID(tweak)); //get package id and remove using dpkg
+                        log("Removed " + tweak + " with dpkg"); //log success
                     }
                     else
                     {
-                        extractDeb(tweak);
+                        extractDeb(tweak); //extract files for uninstallation
                     }
                 }
-                else if (tweak.Contains(".ipa"))
+                else if (tweak.Contains(".ipa")) //if an ipa
                 {
                     if (rc)
                     {
-                        log("Can't remove IPA on this version of Electra, please uninstall via SpringBoard");
+                        log("Can't remove IPA on this version of Electra, please uninstall via SpringBoard"); //can't remove apps via ssh
                     }
                     else
                     {
-                        extractIPA(tweak);
+                        extractIPA(tweak); //extract apps files for uninstallation
                     }
                 }
-                else
+                else if (tweak.Contains(".zip")) //if a zip
                 {
-                    extractZip(tweak);
+                    extractZip(tweak); //try to extract zip
                 }
             }
-            if (convert) convertTweaks();
-            if (File.Exists("prerm"))
+            if (convert) convertTweaks(); //if files need to be converted for new format convert them
+            if (File.Exists("prerm")) //check for prerm script
             {
                 if (verbose) log("Running prerm script");
                 session.PutFiles("prerm", "script");
                 session.ExecuteCommand("./script && rm script");
+                //run prerm script
             }
-            getFiles();
-            uninstallFiles(session);
-            log("");
+            getFiles(); //get list of files to remove
+            uninstallFiles(session); //uninstall files over ssh
+            log(""); //log newline
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-            if (Environment.GetCommandLineArgs().Contains("dont-update")) update = false;
-
-            deleteIfExists("tic.exe");
-
-            ContextMenu installmenu = new ContextMenu();
-            installmenu.MenuItems.Add("Install Filza");
-            installmenu.MenuItems[0].Click += InstallFilza;
-            installbtn.ContextMenu = installmenu;
-
-            ContextMenu uninstallmenu = new ContextMenu();
-            uninstallmenu.MenuItems.Add("Uninstall Filza");
-            uninstallmenu.MenuItems[0].Click += RemoveFilza;
-            uninstallbtn.ContextMenu = uninstallmenu;
-
+            if (Environment.GetCommandLineArgs().Contains("dont-update")) update = false; //if dont-update in command line args set update to false
+            
             //check for updates
             if (update)
             {
@@ -236,9 +215,9 @@ namespace Tweak_Installer
                 {
                     using (WebClient client = new WebClient())
                     {
-                        string current = File.ReadAllText("version.txt");
-                        string version = client.DownloadString("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/version.txt");
-                        if (current != version)
+                        string current = File.ReadAllText("version.txt"); //read version.txt for current version
+                        string version = client.DownloadString("https://raw.githubusercontent.com/josephwalden13/tweak-installer/master/bin/Debug/version.txt"); //get latest version from my repo
+                        if (current != version) //if they don't match show update prompt
                         {
                             var f = MessageBox.Show(caption: "Update Available!", text: ($"Version {version.Replace("\n", "")} released. Please download it from https://github.com/josephwalden13/tweak-installer/releases\nWould you like to update?"), buttons: MessageBoxButtons.YesNo);
                             if (f == DialogResult.Yes)
@@ -250,11 +229,12 @@ namespace Tweak_Installer
                 }
                 catch { }
             }
-            if (!File.Exists("settings"))
+            if (!File.Exists("settings")) //if settings file doesn't exist create a default one
             {
                 string[] def = new string[] { "192.168.1.1", "22", "" };
                 File.WriteAllLines("settings", def);
             }
+
             string[] data = File.ReadAllLines("settings"); //get ssh settings
             for (int i = 0; i != data.Length; i++)
             {
@@ -263,34 +243,12 @@ namespace Tweak_Installer
             host.Text = data[0];
             port.Text = data[1];
             pass.Text = data[2];
-            if (port.Text == "" || port.Text == "root")
+            if (port.Text == "" || port.Text == "root" /*(port is the same line as user used to be so if port==root reset it)*/)
             {
                 port.Text = "22";
             }
         }
-
-        private void RemoveFilza(object sender, EventArgs e)
-        {
-            MessageBox.Show("This could take up to a minute");
-            Session s = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
-            s.ExecuteCommand("rm -r /Applications/Filza.app");
-            s.ExecuteCommand("uicache");
-            s.Close();
-        }
-
-        private void InstallFilza(object sender, EventArgs e)
-        {
-            MessageBox.Show("This could take up to a minute");
-            Session s = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
-            s.ExecuteCommand("rm Filza.tar");
-            s.ExecuteCommand("wget dl.sparko.me/Filza.tar");
-            s.ExecuteCommand("tar -xf Filza.tar");
-            s.ExecuteCommand("rm -r /Applications/Filza.app");
-            s.ExecuteCommand("mv Filza.app /Applications/Filza.app");
-            s.ExecuteCommand("uicache");
-            s.Close();
-        }
-
+        
         private void host_TextChanged(object sender, EventArgs e)
         {
             string[] data = { host.Text, port.Text, pass.Text };
@@ -305,18 +263,19 @@ namespace Tweak_Installer
 
         void respring_Click(object sender, EventArgs e)
         {
-            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
+            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text)); //get ssh session
             log("Respringing");
-            session.ExecuteCommand("killall -9 SpringBoard");
+            session.ExecuteCommand("killall -9 SpringBoard"); //kill springboard
             log("Done");
             log("");
+            session.Close();
         }
 
         private void uicache_Click(object sender, EventArgs e)
         {
-            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text));
+            session = getSession(host.Text, "root", pass.Text, int.Parse(port.Text)); //get ssh session
             log("Running uicache");
-            session.ExecuteCommand("uicache");
+            session.ExecuteCommand("uicache"); //run uicache
             session.ExecuteCommand("Done");
             log("");
             session.Close();
@@ -396,7 +355,7 @@ namespace Tweak_Installer
         {
             if (!unix)
             {
-                return i.Replace("\\", "/");//.Replace(" ", "\\ ").Replace("(", "\\(").Replace(")", "\\)").Replace("'", "\\'").Replace("@", "\\@");
+                return i.Replace("\\", "/");
             }
             else
             {
@@ -470,7 +429,7 @@ namespace Tweak_Installer
 
         public void getOptions()
         {
-            skip = File.Exists("skip.list") ? File.ReadAllLines("skip.list").ToList() : new List<string>();
+            skip = File.Exists("skip.list") ? File.ReadAllLines("skip.list").ToList() : new List<string>(); //get files to skip
         }
 
         public void extractZip(string path)
@@ -723,6 +682,10 @@ namespace Tweak_Installer
                 if (verbose) log("You're running LibreiOS. I'll add entitlements to applications");
                 jtool = true;
             }
+            /*
+             * check if jakeshacks jailbreak being used
+             * set convert to true
+             */
         }
 
         public Session getSession(string ip, string user, string password, int port)
@@ -866,6 +829,10 @@ namespace Tweak_Installer
 
         public void convertTweaks()
         {
+            /*
+             * add code to check if jakeshacks jailbreak
+             * patch tweaks for that
+             */
             log("Converting to electra tweak format");
             createDirIfDoesntExist("files\\bootstrap");
             createDirIfDoesntExist("files\\bootstrap\\Library");
