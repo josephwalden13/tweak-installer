@@ -1,3 +1,6 @@
 
 *.ide-shm
 *.ide-wal
+bin
+obj
+.vs
