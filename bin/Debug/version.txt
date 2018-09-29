@@ -1,1 +1,1 @@
-2.1.1 (Fixes IPA not found issue)
+2.2 (cleaned up code and bug fixes)
