@@ -45,7 +45,6 @@
             this.reddit = new System.Windows.Forms.LinkLabel();
             this.creator = new System.Windows.Forms.LinkLabel();
             this.ui = new System.Windows.Forms.LinkLabel();
-            this.debslnk = new System.Windows.Forms.Button();
             this.github = new System.Windows.Forms.LinkLabel();
             this.autolabel = new System.Windows.Forms.Label();
             this.paypal = new System.Windows.Forms.LinkLabel();
@@ -233,7 +232,7 @@
             this.version.Name = "version";
             this.version.Size = new System.Drawing.Size(36, 13);
             this.version.TabIndex = 16;
-            this.version.Text = "2.1.1";
+            this.version.Text = "2.2.1";
             this.version.Click += new System.EventHandler(this.version_Click);
             // 
             // twitter
@@ -287,21 +286,6 @@
             this.ui.TabStop = true;
             this.ui.Text = "(ui by brnnkr)";
             this.ui.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ui_LinkClicked);
-            // 
-            // debslnk
-            // 
-            this.debslnk.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(27)))), ((int)(((byte)(27)))), ((int)(((byte)(27)))));
-            this.debslnk.FlatAppearance.BorderSize = 0;
-            this.debslnk.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.debslnk.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold);
-            this.debslnk.ForeColor = System.Drawing.Color.DimGray;
-            this.debslnk.Location = new System.Drawing.Point(12, 169);
-            this.debslnk.Name = "debslnk";
-            this.debslnk.Size = new System.Drawing.Size(220, 51);
-            this.debslnk.TabIndex = 3;
-            this.debslnk.Text = "Get Debs";
-            this.debslnk.UseVisualStyleBackColor = false;
-            this.debslnk.Click += new System.EventHandler(this.debslnk_Click);
             // 
             // github
             // 
@@ -371,9 +355,9 @@
             this.terminal.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.terminal.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold);
             this.terminal.ForeColor = System.Drawing.Color.DimGray;
-            this.terminal.Location = new System.Drawing.Point(235, 169);
+            this.terminal.Location = new System.Drawing.Point(9, 169);
             this.terminal.Name = "terminal";
-            this.terminal.Size = new System.Drawing.Size(220, 51);
+            this.terminal.Size = new System.Drawing.Size(446, 51);
             this.terminal.TabIndex = 22;
             this.terminal.Text = "Terminal";
             this.terminal.UseVisualStyleBackColor = false;
@@ -483,7 +467,6 @@
             this.Controls.Add(this.paypal);
             this.Controls.Add(this.autolabel);
             this.Controls.Add(this.github);
-            this.Controls.Add(this.debslnk);
             this.Controls.Add(this.ui);
             this.Controls.Add(this.creator);
             this.Controls.Add(this.reddit);
@@ -533,7 +516,6 @@
         private System.Windows.Forms.LinkLabel reddit;
         private System.Windows.Forms.LinkLabel creator;
         private System.Windows.Forms.LinkLabel ui;
-        private System.Windows.Forms.Button debslnk;
         private System.Windows.Forms.LinkLabel github;
         private System.Windows.Forms.Label autolabel;
         private System.Windows.Forms.LinkLabel paypal;
