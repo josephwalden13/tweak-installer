@@ -1,6 +1,7 @@
 ## I am not responsible for any damage that may be caused by using this tool. Use at your own risk
 
 # tweak-installer
+## Unless you need to, or know what you're doing, don't use this tool 
 
 An open source C# tweak installer for iOS. 
 This tool can be used as an alternative to Cydia / Installer and other package managers, but it is not a replacement. 
