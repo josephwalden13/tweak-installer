@@ -342,6 +342,11 @@ namespace Tweak_Installer
             Process.Start("putty.exe", host.Text + ":" + port.Text + " -l root -pw " + pass.Text);
         }
 
+        private void clearBtn_Click(object sender, EventArgs e)
+        {
+            output.Clear();
+        }
+
         //tweak installer library
 
         public List<string> tweaks = new List<string>(), skip = new List<string>();

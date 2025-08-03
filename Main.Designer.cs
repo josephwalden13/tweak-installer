@@ -52,6 +52,7 @@
             this.port = new System.Windows.Forms.TextBox();
             this.terminal = new System.Windows.Forms.Button();
             this.output = new System.Windows.Forms.TextBox();
+            this.clearBtn = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectDebsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -374,8 +375,23 @@
             this.output.Multiline = true;
             this.output.Name = "output";
             this.output.ReadOnly = true;
-            this.output.Size = new System.Drawing.Size(306, 469);
+            this.output.Size = new System.Drawing.Size(306, 439);
             this.output.TabIndex = 23;
+            // 
+            // clearBtn
+            // 
+            this.clearBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(27)))), ((int)(((byte)(27)))), ((int)(((byte)(27)))));
+            this.clearBtn.FlatAppearance.BorderSize = 0;
+            this.clearBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.clearBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
+            this.clearBtn.ForeColor = System.Drawing.Color.White;
+            this.clearBtn.Location = new System.Drawing.Point(476, 475);
+            this.clearBtn.Name = "clearBtn";
+            this.clearBtn.Size = new System.Drawing.Size(306, 29);
+            this.clearBtn.TabIndex = 24;
+            this.clearBtn.Text = "Clear Commands Board";
+            this.clearBtn.UseVisualStyleBackColor = false;
+            this.clearBtn.Click += new System.EventHandler(this.clearBtn_Click);
             // 
             // menuStrip1
             // 
@@ -460,6 +476,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(25)))), ((int)(((byte)(25)))));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(794, 516);
+            this.Controls.Add(this.clearBtn);
             this.Controls.Add(this.output);
             this.Controls.Add(this.terminal);
             this.Controls.Add(this.portlbl);
@@ -523,6 +540,7 @@
         private System.Windows.Forms.TextBox port;
         private System.Windows.Forms.Button terminal;
         private System.Windows.Forms.TextBox output;
+        private System.Windows.Forms.Button clearBtn;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem advancedToolStripMenuItem;
